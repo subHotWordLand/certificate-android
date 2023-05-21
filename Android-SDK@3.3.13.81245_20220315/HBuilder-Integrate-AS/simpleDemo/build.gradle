@@ -1,0 +1,85 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 29
+//    buildToolsVersion "29.0.0"
+    defaultConfig {
+        applicationId "com.rongjingtaihegezheng.cert"
+        minSdkVersion 21
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_1_8
+            targetCompatibility JavaVersion.VERSION_1_8
+        }
+        manifestPlaceholders = [
+                "GETUI_APPID": "4mdGZcOQuv75c1gQURvcM8",
+                "plus.unipush.appid" : "4mdGZcOQuv75c1gQURvcM8",
+                "plus.unipush.appkey" : "etzMJfwwA06nMJ8CvumHj",
+                "plus.unipush.appsecret": "0wGkorOQEy7aBTy5lEp3W3",
+                "apk.applicationId":"com.rongjingtaihegezheng.cert"
+        ]
+    }
+    signingConfigs {
+        config {
+            keyAlias 'hegezhengalias'
+            keyPassword '123456'
+            storeFile file('hegezheng.jks')
+            storePassword '123456'
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.config
+            minifyEnabled false
+            buildConfigField "Boolean", "ENVIRONMENT", "false"
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        release {
+            signingConfig signingConfigs.config
+            minifyEnabled false
+            buildConfigField "Boolean", "ENVIRONMENT", "true"
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    aaptOptions {
+        additionalParameters '--auto-add-overlay'
+        ignoreAssetsPattern "!.svn:!.git:.*:!CVS:!thumbs.db:!picasa.ini:!*.scc:*~"
+    }
+    sourceSets.main {
+        jni.srcDirs = []
+        jniLibs.srcDir "libs"
+    }
+    buildFeatures {
+        viewBinding true
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation 'com.facebook.fresco:fresco:2.5.0'
+    implementation "com.facebook.fresco:animated-gif:2.5.0"
+    implementation 'com.github.bumptech.glide:glide:4.9.0'
+    implementation 'com.alibaba:fastjson:1.1.46.android'
+    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.navigation:navigation-fragment:2.3.5'
+    implementation 'androidx.navigation:navigation-ui:2.3.5'
+    implementation files('libs/r01.jar')
+    implementation files('libs/bleLib.jar')
+    implementation 'com.jakewharton:butterknife:10.0.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.0.0'
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.46'
+    implementation 'com.tbruyelle.rxpermissions:rxpermissions:0.9.3'
+
+}
+
