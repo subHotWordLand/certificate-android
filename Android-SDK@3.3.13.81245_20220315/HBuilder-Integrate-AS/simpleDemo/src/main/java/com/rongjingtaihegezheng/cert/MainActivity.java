@@ -47,6 +47,7 @@ import java.util.concurrent.ExecutorService;
 
 import cpcl.PrinterHelper;
 import io.dcloud.PandoraEntryActivity;
+import io.dcloud.common.adapter.util.Logger;
 import rx.functions.Action1;
 
 
@@ -63,6 +64,7 @@ public class MainActivity extends CheckPermissionsActivity {
     private static String[] wifi_PERMISSIONS = {"android.permission.CHANGE_WIFI_STATE", "android.permission.ACCESS_WIFI_STATE"};
     private JSONObject prtInfo;
     private Callback printCallback;
+    private int btIntentReqCode = 23550;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -82,7 +84,7 @@ public class MainActivity extends CheckPermissionsActivity {
                         ConnectType = "Bluetooth";
                         Intent intent = new Intent(thisCon, BTActivity.class);
                         intent.putExtra("TAG", 0);
-                        startActivityForResult(intent, 0);
+                        startActivityForResult(intent, btIntentReqCode);
                     }
                 }
             });
@@ -121,22 +123,25 @@ public class MainActivity extends CheckPermissionsActivity {
     }
 
     //call back by scan bluetooth printer
-    @SuppressLint("MissingSuperCall")
+//    @SuppressLint("MissingSuperCall")
     @Override
     public void onActivityResult(int requestCode, int resultCode, final Intent data) {
-        try {
-            String strIsConnected;
-            if (data == null) return;
-            switch (resultCode) {
-                case RESULT_CANCELED:
-                    connectBT(data.getStringExtra("SelectedBDAddress"));
-                    break;
+        if (requestCode == btIntentReqCode) {
+            try {
+                String strIsConnected;
+                if (data == null) return;
+                switch (resultCode) {
+                    case RESULT_CANCELED:
+                        connectBT(data.getStringExtra("SelectedBDAddress"));
+                        break;
+                }
+            } catch (Exception e) {
+                Log.e("rongjingtai", (new StringBuilder("Activity_Main --> onActivityResult ")).append(e.getMessage()).toString());
             }
-        } catch (Exception e) {
-            Log.e("rongjingtai", (new StringBuilder("Activity_Main --> onActivityResult ")).append(e.getMessage()).toString());
+            return;
         }
         //测试如果是js通知 这句加上会让onActivityResult执行两次导致打印机连接异常 查询了一下貌似是fragment引起的 https://www.jianshu.com/p/cbef02d0765d
-//        super.onActivityResult(requestCode, resultCode, data);
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void connectBT(final String selectedBDAddress) {

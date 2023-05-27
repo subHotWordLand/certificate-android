@@ -109,15 +109,16 @@
         </activity>
         <activity
             android:name=".PrtActivity"
-            android:theme="@style/AppTheme">
-        </activity>
+            android:theme="@style/AppTheme"></activity>
         <activity
             android:name=".BLActivity"
             android:theme="@style/AppTheme">
 
         </activity>
 
-        <activity android:name=".BTActivity" android:theme="@style/AppTheme"></activity>
+        <activity
+            android:name=".BTActivity"
+            android:theme="@style/AppTheme"></activity>
 
         <service
             android:name="com.example.r01lib.TelinkLightService"
@@ -126,6 +127,23 @@
         <meta-data
             android:name="dcloud_appkey"
             android:value="f4bb08b5b873326cd1a894f8143256af" />
+
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="9e50192454eda1de61151eec50b645f1" />
+        <!-- 定位需要的服务 -->
+        <service android:name="com.amap.api.location.APSService"></service>
+
+        <provider
+            android:name="io.dcloud.common.util.DCloud_FileProvider"
+            android:authorities="com.rongjingtaihegezheng.cert.dc.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/dcloud_file_provider" />
+        </provider>
+
     </application>
 
 </manifest>
