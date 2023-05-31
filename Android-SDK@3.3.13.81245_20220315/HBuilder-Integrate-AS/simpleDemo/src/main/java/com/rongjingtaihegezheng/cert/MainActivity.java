@@ -238,7 +238,7 @@ public class MainActivity extends CheckPermissionsActivity {
                 }
                 int qrcodeY = 65;
                 if (facei == 0) qrcodeY = 0;
-                PrinterHelper.PrintQR(PrinterHelper.BARCODE, "400", String.valueOf(qrcodeY), "4", "4", qrcode);
+                PrinterHelper.PrintQR(PrinterHelper.BARCODE, "400", String.valueOf(qrcodeY), "4", "3", qrcode);
                 PrinterHelper.Form();
                 if (facei == 1) {
                     PrinterHelper.Print();
