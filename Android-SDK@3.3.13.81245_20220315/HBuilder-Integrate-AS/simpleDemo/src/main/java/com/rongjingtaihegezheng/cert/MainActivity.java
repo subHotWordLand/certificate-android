@@ -29,6 +29,7 @@ import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.example.r01lib.WTR01;
+import com.mtreader.MTReaderEngine;
 import com.rongjingtaihegezheng.network.BaseNetApi;
 import com.rongjingtaihegezheng.network.Forground;
 import com.tbruyelle.rxpermissions.RxPermissions;
@@ -52,6 +53,8 @@ import rx.functions.Action1;
 
 
 public class MainActivity extends CheckPermissionsActivity {
+    //身份证识别实例
+    private MTReaderEngine SDTAPI = null;
     private Context thisCon = null;
     private BluetoothAdapter mBluetoothAdapter;
     private Handler handler;
