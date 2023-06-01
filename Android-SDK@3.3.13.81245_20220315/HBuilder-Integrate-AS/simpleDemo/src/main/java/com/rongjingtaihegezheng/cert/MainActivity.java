@@ -8,12 +8,16 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.telecom.Connection;
@@ -21,6 +25,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,12 +43,19 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import cpcl.PrinterHelper;
@@ -53,8 +65,6 @@ import rx.functions.Action1;
 
 
 public class MainActivity extends CheckPermissionsActivity {
-    //身份证识别实例
-    private MTReaderEngine SDTAPI = null;
     private Context thisCon = null;
     private BluetoothAdapter mBluetoothAdapter;
     private Handler handler;
@@ -67,13 +77,270 @@ public class MainActivity extends CheckPermissionsActivity {
     private static String[] wifi_PERMISSIONS = {"android.permission.CHANGE_WIFI_STATE", "android.permission.ACCESS_WIFI_STATE"};
     private JSONObject prtInfo;
     private Callback printCallback;
+    private Callback idcardCallback;
     private int btIntentReqCode = 23550;
+    // 身份证start
+    //身份证识别实例
+    private MTReaderEngine SDTAPI = null;
+    private String mDefaultSerialPath = "/dev/ttyS3";
+    private SerialPortFinder mSerialPortFinder = new SerialPortFinder();
+    private UsbDevPermission mUsbDevPermission;
+    private Set<String> chmodCmdString = new HashSet<String>();
+
+    private boolean isReadingCard = false;
+    private int m_device_fd = 0;
+    private Context mContext;
+    private long startTime;
+    //身份证end
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         thisCon = this;
+        mContext = this;
+        //idcard start
+        SDTAPI = MTReaderEngine.getInstance();
+        mUsbDevPermission = new UsbDevPermission(thisCon);
+        initCmdList();
+        List<String> serialLists = new ArrayList<String>();
+        String[] serials = null;
+        try {
+            serials = mSerialPortFinder.getAllDevicesPath();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+        }
+        if (serials != null) {
+            for (int i = 0; i < serials.length; i++) {
+                String chmodSerial = "chmod 777 " + serials[i] + ";";
+                serialLists.add(serials[i]);
+                chmodCmdString.add(chmodSerial);
+            }
+        } else {
+            serials = new String[1];
+            serials[0] = mDefaultSerialPath;
+            serialLists.add(mDefaultSerialPath);
+        }
+
+        RootCmd.chmodShell(chmodCmdString);
+        FileUtils.getInstance(mContext).copyAssetsToSD("wltlib", "wltlib");
+        getSystemMsg();
+        //idcard end
 //        EnableBluetooth();
+    }
+
+    private void getSystemMsg() {
+        try {
+            showMessage("手机厂商:" + SystemUtil.getDeviceBrand(), 1);
+            showMessage("手机型号:" + SystemUtil.getSystemModel(), 1);
+            showMessage("系统语言:" + SystemUtil.getSystemLanguage(), 1);
+            showMessage("系统版本号:" + SystemUtil.getSystemVersion(), 1);
+            showMessage("SELinuxMode:" + RootCmd.getSELinuxMode(), 1);
+        } catch (Exception ex) {
+            ex.getLocalizedMessage();
+        }
+    }
+
+    public void connectdevIdcard() {
+        //USB
+        m_device_fd = mUsbDevPermission.getUsbFileDescriptor(0x0400, 0xC35A);
+        if (m_device_fd <= 0) {
+            m_device_fd = mUsbDevPermission.getUsbFileDescriptor(0x0483, 0x5652);
+        }
+        if (m_device_fd <= 0) {
+            showMessage("获取设备描述符失败,fd=" + m_device_fd, 1);
+            return;
+        }
+        //Selinux处于强制模式下:Enforcing
+        //Selinux处于宽容模式下:Permissive
+        int ret = 0;
+
+        ret = SDTAPI.OpenReader(m_device_fd);
+
+        if (ret == 0x90) {
+            showMessage("打开设备成功 开始进行读卡", 1);
+            startReadCard();
+        } else {
+            showMessage("打开设备失败,ret=" + ret, 1);
+        }
+    }
+
+    public void startReadCard() {
+        if (!isReadingCard) {
+            isReadingCard = true;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    // TODO Auto-generated method stub
+                    while (isReadingCard) {
+                        byte pucCHMsg[] = new byte[256];
+                        byte pucPHMsg[] = new byte[1024];
+                        byte pucFPMsg[] = new byte[1024];
+
+                        int puiCHMsgLen[] = new int[1];
+                        int puiPHMsgLen[] = new int[1];
+                        int puiFPMsgLen[] = new int[1];
+
+                        int ret = SDTAPI.ReadIDCardAll(pucCHMsg, puiCHMsgLen, pucPHMsg, puiPHMsgLen, pucFPMsg, puiFPMsgLen);
+                        if (ret == 0x90) {
+                            try {
+                                showIDCardInfo(pucCHMsg, pucPHMsg, pucFPMsg, puiFPMsgLen);
+                            } catch (UnsupportedEncodingException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                            isReadingCard = false;
+                            break;
+                        }
+                    }
+                }
+            }).start();
+        }
+    }
+
+    public void closeIdcardPort() {
+        startTime = System.currentTimeMillis();
+        int ret = SDTAPI.CloseReader();
+        if (ret == 0x90) {
+            showMessage("关闭设备成功", 1);
+        } else {
+            showMessage("关闭设备失败,ret=" + ret, 1);
+        }
+        showMessage("用时:" + (System.currentTimeMillis() - startTime) + "ms", 1);
+    }
+
+    private void showIDCardInfo(byte[] pucCHMsg, byte[] pucPHMsg,
+                                byte[] pucFPMsg, int[] puiFPMsgLen)
+            throws UnsupportedEncodingException {
+        int ret;
+        String StrBmpFilePath;
+        HashMap<Integer, String> resultData = new HashMap<>();
+        resultData = AnysizeIDCMsg.AnysizeData(pucCHMsg);
+        if (resultData.size() == 0) {
+            showMessage("卡片数据解析出错！", 0);
+            return;
+        }
+        if (resultData.get(AnysizeIDCMsg.CARDTYPE_INDEX).equals("GAT")) {
+
+            showMessage(resultData.get(AnysizeIDCMsg.NAME_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.SEX_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.BIRTH_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.ADDR_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.IDNUM_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.IDTYPE_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.TXZHM_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.QFCS_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.DEPART_INDEX), 1);
+
+            showMessage(resultData.get(AnysizeIDCMsg.STATIME_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.ENDTIME_INDEX), 1);
+
+        } else if (resultData.get(AnysizeIDCMsg.CARDTYPE_INDEX).equals("FGR")) {
+
+            showMessage(resultData.get(AnysizeIDCMsg.FGRNAME_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.NAME_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.SEX_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.BIRTH_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.COUNTRY_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.IDNUM_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.DEPART_INDEX), 1);
+
+            showMessage(resultData.get(AnysizeIDCMsg.VERSION_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.IDTYPE_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.SLJGCODE_INDEX), 1);
+
+            showMessage(resultData.get(AnysizeIDCMsg.STATIME_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.ENDTIME_INDEX), 1);
+
+        } else {
+            showMessage(resultData.get(AnysizeIDCMsg.NAME_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.SEX_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.NATION_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.BIRTH_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.ADDR_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.IDNUM_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.DEPART_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.STATIME_INDEX), 1);
+            showMessage(resultData.get(AnysizeIDCMsg.ENDTIME_INDEX), 1);
+        }
+        showMessage("指纹信息:\r\n" + bytesToHexString(pucFPMsg, puiFPMsgLen[0]), 1);
+        if (IDCReaderSDK.GetLoadSoState()) {
+            ret = IDCReaderSDK.Init();
+            if (ret == 0) {
+                int t = IDCReaderSDK.unpack(pucPHMsg, AnysizeIDCMsg.byLicData);
+                if (t == 1) {
+                    StrBmpFilePath = Environment.getExternalStorageDirectory() + "/wltlib/zp.bmp";
+                    FileInputStream fis;
+                    try {
+                        fis = new FileInputStream(StrBmpFilePath);
+                        fis.close();
+                    } catch (FileNotFoundException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    showMessage(StrBmpFilePath, 2); // 显示照片
+                } else {
+                    showMessage("身份证照片解码库解码失败,ret = " + t, 0);
+                }
+            } else {
+                showMessage("身份证照片解码库初始化失败,请检查< " + Environment.getExternalStorageDirectory() + "/wltlib/ > 目录下是否有照片解码库授权文件!", 0);
+            }
+        } else {
+            showMessage("未找到身份证照片解码库libwltdecode.so!", 0);
+        }
+    }
+
+    public static final String bytesToHexString(byte[] bArray, int bArrayLen) {
+        StringBuffer sb = new StringBuffer(bArrayLen);
+        String sTemp;
+        for (int i = 0; i < bArrayLen; i++) {
+            sTemp = Integer.toHexString(0xFF & bArray[i]);
+            if (sTemp.length() < 2)
+                sb.append(0);
+            sb.append(sTemp.toUpperCase());
+        }
+        return sb.toString();
+    }
+
+    /*
+     * str:要显示的信息
+     * Flag：1时为文本显示，2时为图像显示
+     */
+    protected void showMessage(String str, int Flag) {
+        Message msg = new Message();
+        msg.obj = str;
+        msg.what = Flag;
+        mhandler.sendMessage(msg);
+        try {
+            Thread.sleep(5);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    Handler mhandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            String str = (String) msg.obj;
+            Log.d("idcard handleMessage", str);
+            Toast.makeText(thisCon, str, Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private void initCmdList() {
+        chmodCmdString.add("chmod 777 /dev/;");
+        chmodCmdString.add("chmod 777 /dev/bus/;");
+        chmodCmdString.add("chmod 777 /dev/bus/usb/;");
+        chmodCmdString.add("chmod 777 /dev/bus/usb/0*;");
+        chmodCmdString.add("chmod 777 /dev/bus/usb/001/*;");
+        chmodCmdString.add("chmod 777 /dev/bus/usb/002/*;");
+        chmodCmdString.add("chmod 777 /dev/bus/usb/003/*;");
+        chmodCmdString.add("chmod 777 /dev/bus/usb/004/*;");
+        chmodCmdString.add("chmod 777 /dev/bus/usb/005/*;");
     }
 
     public void naviBtSelected() {
@@ -123,6 +390,60 @@ public class MainActivity extends CheckPermissionsActivity {
             }
         }.start();
         this.printCallback = callback;
+    }
+
+    /**
+     * 启动身份证识别for js call
+     */
+    public void startIdcardCheckFromJs(String data, Callback callback) throws JSONException {
+        JSONObject result = new JSONObject(data);
+        String method = result.getString("method");
+        JSONObject dataObj = result.getJSONObject("data");
+        prtInfo = dataObj;
+        Log.e("rongjingtai", "dataObj is " + dataObj);
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            connectdevIdcard();
+                        }
+                    });
+                } catch (Exception e) {
+                }
+            }
+        }.start();
+        this.idcardCallback = callback;
+    }
+
+    /**
+     * 关闭身份证识别读卡
+     */
+    public void closeIdcardCheckFromJs(String data, Callback callback) throws JSONException {
+        JSONObject result = new JSONObject(data);
+        String method = result.getString("method");
+        JSONObject dataObj = result.getJSONObject("data");
+        prtInfo = dataObj;
+        Log.e("rongjingtai", "dataObj is " + dataObj);
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            closeIdcardPort();
+                        }
+                    });
+                } catch (Exception e) {
+                }
+            }
+        }.start();
+        this.idcardCallback = callback;
     }
 
     //call back by scan bluetooth printer
