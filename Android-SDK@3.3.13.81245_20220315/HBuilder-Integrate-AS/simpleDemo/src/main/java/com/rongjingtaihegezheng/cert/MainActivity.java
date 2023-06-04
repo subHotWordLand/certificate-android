@@ -34,6 +34,7 @@ import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.example.r01lib.WTR01;
+import com.ivsign.android.IDCReader.IDCReaderSDK;
 import com.mtreader.MTReaderEngine;
 import com.rongjingtaihegezheng.network.BaseNetApi;
 import com.rongjingtaihegezheng.network.Forground;
@@ -57,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 import cpcl.PrinterHelper;
 import io.dcloud.PandoraEntryActivity;
@@ -124,7 +126,7 @@ public class MainActivity extends CheckPermissionsActivity {
 
         RootCmd.chmodShell(chmodCmdString);
         FileUtils.getInstance(mContext).copyAssetsToSD("wltlib", "wltlib");
-        getSystemMsg();
+//        getSystemMsg();
         //idcard end
 //        EnableBluetooth();
     }
@@ -161,7 +163,16 @@ public class MainActivity extends CheckPermissionsActivity {
             showMessage("打开设备成功 开始进行读卡", 1);
             startReadCard();
         } else {
-            showMessage("打开设备失败,ret=" + ret, 1);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    /**
+                     * 延时执行的代码
+                     */
+                    connectdevIdcard();
+                }
+            }, 1000); // 延时1秒
+            showMessage("打开设备失败,ret=" + ret + "进行重试", 1);
         }
     }
 
@@ -220,8 +231,15 @@ public class MainActivity extends CheckPermissionsActivity {
             showMessage("卡片数据解析出错！", 0);
             return;
         }
+        Map<Object, Object> tresultData = resultData.entrySet().stream().collect(Collectors.toMap(
+                entry -> String.valueOf(entry.getKey()),
+                entry -> entry.getValue()
+        ));
+        JSONObject r = new JSONObject(tresultData);
+        String rstr = r.toString();
+        if (idcardCallback != null) idcardCallback.result(1, rstr);
+        /*
         if (resultData.get(AnysizeIDCMsg.CARDTYPE_INDEX).equals("GAT")) {
-
             showMessage(resultData.get(AnysizeIDCMsg.NAME_INDEX), 1);
             showMessage(resultData.get(AnysizeIDCMsg.SEX_INDEX), 1);
             showMessage(resultData.get(AnysizeIDCMsg.BIRTH_INDEX), 1);
@@ -235,7 +253,8 @@ public class MainActivity extends CheckPermissionsActivity {
             showMessage(resultData.get(AnysizeIDCMsg.STATIME_INDEX), 1);
             showMessage(resultData.get(AnysizeIDCMsg.ENDTIME_INDEX), 1);
 
-        } else if (resultData.get(AnysizeIDCMsg.CARDTYPE_INDEX).equals("FGR")) {
+        }
+        else if (resultData.get(AnysizeIDCMsg.CARDTYPE_INDEX).equals("FGR")) {
 
             showMessage(resultData.get(AnysizeIDCMsg.FGRNAME_INDEX), 1);
             showMessage(resultData.get(AnysizeIDCMsg.NAME_INDEX), 1);
@@ -252,7 +271,8 @@ public class MainActivity extends CheckPermissionsActivity {
             showMessage(resultData.get(AnysizeIDCMsg.STATIME_INDEX), 1);
             showMessage(resultData.get(AnysizeIDCMsg.ENDTIME_INDEX), 1);
 
-        } else {
+        }
+        else {
             showMessage(resultData.get(AnysizeIDCMsg.NAME_INDEX), 1);
             showMessage(resultData.get(AnysizeIDCMsg.SEX_INDEX), 1);
             showMessage(resultData.get(AnysizeIDCMsg.NATION_INDEX), 1);
@@ -264,6 +284,7 @@ public class MainActivity extends CheckPermissionsActivity {
             showMessage(resultData.get(AnysizeIDCMsg.ENDTIME_INDEX), 1);
         }
         showMessage("指纹信息:\r\n" + bytesToHexString(pucFPMsg, puiFPMsgLen[0]), 1);
+
         if (IDCReaderSDK.GetLoadSoState()) {
             ret = IDCReaderSDK.Init();
             if (ret == 0) {
@@ -291,6 +312,8 @@ public class MainActivity extends CheckPermissionsActivity {
         } else {
             showMessage("未找到身份证照片解码库libwltdecode.so!", 0);
         }
+         */
+
     }
 
     public static final String bytesToHexString(byte[] bArray, int bArrayLen) {
@@ -399,7 +422,6 @@ public class MainActivity extends CheckPermissionsActivity {
         JSONObject result = new JSONObject(data);
         String method = result.getString("method");
         JSONObject dataObj = result.getJSONObject("data");
-        prtInfo = dataObj;
         Log.e("rongjingtai", "dataObj is " + dataObj);
         new Thread() {
             @Override
@@ -416,7 +438,57 @@ public class MainActivity extends CheckPermissionsActivity {
                 }
             }
         }.start();
-        this.idcardCallback = callback;
+        if (callback != null) this.idcardCallback = callback;
+    }
+
+    /**
+     * 身份证放置监听for js call
+     */
+    public void cardListeningFromJs(String data) throws JSONException {
+        JSONObject result = new JSONObject(data);
+        String method = result.getString("method");
+        JSONObject dataObj = result.getJSONObject("data");
+        Log.e("rongjingtai", "dataObj is " + dataObj);
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            startReadCard();
+                        }
+                    });
+                } catch (Exception e) {
+                }
+            }
+        }.start();
+    }
+
+    /**
+     * 身份证放置停止监听for js call
+     */
+    public void cardListeningStopFromJs(String data) throws JSONException {
+        JSONObject result = new JSONObject(data);
+        String method = result.getString("method");
+        JSONObject dataObj = result.getJSONObject("data");
+        Log.e("rongjingtai", "dataObj is " + dataObj);
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            isReadingCard = false;
+                        }
+                    });
+                } catch (Exception e) {
+                }
+            }
+        }.start();
     }
 
     /**
@@ -426,7 +498,6 @@ public class MainActivity extends CheckPermissionsActivity {
         JSONObject result = new JSONObject(data);
         String method = result.getString("method");
         JSONObject dataObj = result.getJSONObject("data");
-        prtInfo = dataObj;
         Log.e("rongjingtai", "dataObj is " + dataObj);
         new Thread() {
             @Override
@@ -443,7 +514,7 @@ public class MainActivity extends CheckPermissionsActivity {
                 }
             }
         }.start();
-        this.idcardCallback = callback;
+        if (callback != null) this.idcardCallback = callback;
     }
 
     //call back by scan bluetooth printer
@@ -585,6 +656,7 @@ public class MainActivity extends CheckPermissionsActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        mUsbDevPermission.unRegisterReceiver();
     }
 
 }

@@ -16,12 +16,16 @@ android {
             targetCompatibility JavaVersion.VERSION_1_8
         }
         manifestPlaceholders = [
-                "GETUI_APPID": "4mdGZcOQuv75c1gQURvcM8",
-                "plus.unipush.appid" : "4mdGZcOQuv75c1gQURvcM8",
-                "plus.unipush.appkey" : "etzMJfwwA06nMJ8CvumHj",
+                "GETUI_APPID"           : "4mdGZcOQuv75c1gQURvcM8",
+                "plus.unipush.appid"    : "4mdGZcOQuv75c1gQURvcM8",
+                "plus.unipush.appkey"   : "etzMJfwwA06nMJ8CvumHj",
                 "plus.unipush.appsecret": "0wGkorOQEy7aBTy5lEp3W3",
-                "apk.applicationId":"com.rongjingtaihegezheng.cert"
+                "apk.applicationId"     : "com.rongjingtaihegezheng.cert"
         ]
+        ndk {
+            // 打包生成的 APK 文件指挥包含 ARM 指令集的动态库
+            abiFilters "armeabi-v7a"/*, "arm64-v8a", "x86", "x86_64"*/
+        }
     }
     signingConfigs {
         config {
