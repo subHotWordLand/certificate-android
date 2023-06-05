@@ -81,6 +81,7 @@ public class MainActivity extends CheckPermissionsActivity {
     private Callback printCallback;
     private Callback idcardCallback;
     private int btIntentReqCode = 23550;
+    private Boolean isConnectPrint = false;
     // 身份证start
     //身份证识别实例
     private MTReaderEngine SDTAPI = null;
@@ -214,6 +215,7 @@ public class MainActivity extends CheckPermissionsActivity {
         int ret = SDTAPI.CloseReader();
         if (ret == 0x90) {
             showMessage("关闭设备成功", 1);
+            mUsbDevPermission.unRegisterReceiver();
         } else {
             showMessage("关闭设备失败,ret=" + ret, 1);
         }
@@ -404,6 +406,11 @@ public class MainActivity extends CheckPermissionsActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            //如果已经连接了的情况下直接打印
+                            if (isConnectPrint) {
+                                printResult();
+                                return;
+                            }
                             //在这里写你要跳转的界面
                             naviBtSelected();
                         }
@@ -414,6 +421,25 @@ public class MainActivity extends CheckPermissionsActivity {
         }.start();
         this.printCallback = callback;
     }
+
+    /**
+     * 关闭打印for js call
+     */
+    public void closePrintPort(String data, Callback callback) throws JSONException {
+        JSONObject result = new JSONObject(data);
+        String method = result.getString("method");
+        JSONObject dataObj = result.getJSONObject("data");
+        Log.e("rongjingtai", "dataObj is " + dataObj);
+        if (!checkClick.isClickEvent()) return;
+        try {
+            PrinterHelper.portClose();
+            isConnectPrint = false;
+            return;
+        } catch (Exception e) {
+            Log.e("rongjingtai", (new StringBuilder("Activity_Main --> closePrintPort ")).append(e.getMessage()).toString());
+        }
+    }
+
 
     /**
      * 启动身份证识别for js call
@@ -556,6 +582,7 @@ public class MainActivity extends CheckPermissionsActivity {
                             if (result == 0) {
                                 Log.d("rongjingtai", "连接成功！");
                                 Toast.makeText(thisCon, "连接成功！", Toast.LENGTH_SHORT).show();
+                                isConnectPrint = true;
                                 printResult();
                             } else {
                                 Log.d("rongjingtai", "连接失败" + result);
