@@ -425,7 +425,7 @@ public class MainActivity extends CheckPermissionsActivity {
     /**
      * 关闭打印for js call
      */
-    public void closePrintPort(String data, Callback callback) throws JSONException {
+    public void closePrintPort(String data) throws JSONException {
         JSONObject result = new JSONObject(data);
         String method = result.getString("method");
         JSONObject dataObj = result.getJSONObject("data");
