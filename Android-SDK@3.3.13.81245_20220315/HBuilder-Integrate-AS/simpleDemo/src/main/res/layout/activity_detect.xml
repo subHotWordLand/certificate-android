@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    android:orientation="vertical">
+
+    <TextureView
+        android:id="@+id/sv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.aiwinn.base.widget.CameraSurfaceView
+        android:id="@+id/sv_2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/fl_uvc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/black">
+
+        <com.serenegiant.usb.widget.UVCCameraTextureView
+            android:id="@+id/uvc"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/fl_uvc2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/black">
+
+        <com.serenegiant.usb.widget.UVCCameraTextureView
+            android:id="@+id/uvc2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <com.rongjingtaihegezheng.cert.MaskView
+        android:id="@+id/kcfmv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2.5" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/other"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/imcomparesucc"
+            android:layout_width="120dp"
+            android:layout_height="160dp"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="@dimen/dp_5"
+            android:layout_marginTop="@dimen/dp_5"
+            android:layout_marginEnd="@dimen/dp_5"
+            android:layout_marginBottom="@dimen/dp_5"
+            android:scaleType="fitXY" />
+
+        <ImageView
+            android:id="@+id/imcomparewait"
+            android:layout_width="120dp"
+            android:layout_height="160dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="@dimen/dp_5"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/tvcomparemsg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/imcomparewait"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="@dimen/dp_5"
+            android:padding="@dimen/dp_10"
+            android:textColor="@color/white"
+            android:textSize="@dimen/sp_18" />
+
+        <View
+            android:id="@+id/devide"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_centerHorizontal="true" />
+
+        <TextView
+            android:id="@+id/tvcompare"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="@dimen/dp_5"
+            android:layout_toStartOf="@id/devide"
+            android:background="@drawable/tv_selector_bg"
+            android:padding="@dimen/dp_10"
+            android:text="@string/slot_card"
+            android:textColor="@drawable/tv_selector_color" />
+
+        <TextView
+            android:id="@+id/tvcomparecancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="@dimen/dp_5"
+            android:layout_toEndOf="@id/devide"
+            android:background="@drawable/tv_selector_bg"
+            android:padding="@dimen/dp_10"
+            android:text="@string/reset"
+            android:textColor="@drawable/tv_selector_color" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/dp_10"
+        android:textColor="@color/red"
+        android:textSize="@dimen/sp_18" />
+
+    <TextView
+        android:id="@+id/debugmessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/message"
+        android:layout_marginLeft="@dimen/dp_10"
+        android:textColor="@color/red"
+        android:textSize="@dimen/sp_16" />
+
+    <ImageView
+        android:id="@+id/back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/dp_10"
+        android:padding="@dimen/dp_10"
+        android:src="@drawable/title_ic_back" />
+
+</RelativeLayout>

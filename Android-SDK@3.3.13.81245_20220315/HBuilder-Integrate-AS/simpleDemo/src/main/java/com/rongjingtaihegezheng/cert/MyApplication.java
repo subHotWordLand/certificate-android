@@ -1,2 +1,3 @@
-package com.wonderland.silianyqfk;public class MyApplication {
+package com.wonderland.silianyqfk;
+public class MyApplication {
 }

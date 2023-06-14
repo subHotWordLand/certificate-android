@@ -1,4 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="../../../../../../../layout/custom_preview.xml" value="0.2635416666666667" />
+        <entry key="simpleDemo/src/main/res/drawable/shape_main_tv_nopress.xml" value="0.229" />
+        <entry key="simpleDemo/src/main/res/drawable/shape_main_tv_press.xml" value="0.229" />
+        <entry key="simpleDemo/src/main/res/drawable/shape_pop.xml" value="0.229" />
+        <entry key="simpleDemo/src/main/res/drawable/tv_selector_bg.xml" value="0.229" />
+        <entry key="simpleDemo/src/main/res/drawable/tv_selector_color.xml" value="0.229" />
+        <entry key="simpleDemo/src/main/res/layout/activity_detect.xml" value="0.23278985507246377" />
+        <entry key="simpleDemo/src/main/res/layout/item_detect.xml" value="0.23278985507246377" />
+      </map>
+    </option>
+  </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="corretto-11" project-jdk-type="JavaSDK" />
 </project>

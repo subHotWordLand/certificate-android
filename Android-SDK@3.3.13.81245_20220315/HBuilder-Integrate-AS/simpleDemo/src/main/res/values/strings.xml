@@ -9,4 +9,20 @@
 
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="rect">人脸大小 : </string>
+    <string name="blur">模糊度 : </string>
+    <string name="light">亮度 : </string>
+    <string name="score">匹配度 : </string>
+    <string name="recognize">识别成功</string>
+    <string name="parse_success">解析成功</string>
+    <string name="parse_fail">解析失败</string>
+    <string name="reopen_activity">请重新打开</string>
+    <string name="load_camera">相机加载中</string>
+    <string name="match_success">匹配成功</string>
+    <string name="match_fail">匹配失败</string>
+    <string name="parse_begin">解析开始</string>
+    <string name="no_face">没有人脸</string>
+    <string name="slot_card">刷卡</string>
+    <string name="reset">重置</string>
+
 </resources>

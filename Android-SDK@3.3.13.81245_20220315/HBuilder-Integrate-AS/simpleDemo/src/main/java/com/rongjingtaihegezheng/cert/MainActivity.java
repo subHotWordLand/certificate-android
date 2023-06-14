@@ -130,6 +130,28 @@ public class MainActivity extends CheckPermissionsActivity {
 //        getSystemMsg();
         //idcard end
 //        EnableBluetooth();
+        // 开启子线程
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(6000); // 等待
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                // 切换到主线程执行任务
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        // 在这里执行需要在主线程中处理的任务
+                        Intent intent = new Intent(thisCon, DetectActivity.class);
+                        startActivity(intent);
+                    }
+                });
+            }
+        }).start();
     }
 
     private void getSystemMsg() {
