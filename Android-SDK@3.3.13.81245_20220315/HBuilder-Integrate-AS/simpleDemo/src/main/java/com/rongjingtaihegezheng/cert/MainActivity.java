@@ -6,61 +6,33 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.hardware.Camera;
-import android.location.LocationManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.os.PowerManager;
-import android.provider.Settings;
-import android.telecom.Connection;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.aiwinn.base.util.PermissionUtils;
 import com.aiwinn.base.util.ToastUtils;
 import com.aiwinn.facedetectsdk.FaceDetectManager;
 import com.aiwinn.facedetectsdk.common.Constants;
-import com.amap.api.location.AMapLocation;
-import com.amap.api.location.AMapLocationClient;
-import com.amap.api.location.AMapLocationClientOption;
-import com.amap.api.location.AMapLocationListener;
-import com.example.r01lib.WTR01;
-import com.ivsign.android.IDCReader.IDCReaderSDK;
 import com.mtreader.MTReaderEngine;
 import com.rongjingtaihegezheng.cert.common.AttConstants;
 import com.rongjingtaihegezheng.cert.common.AttParams;
 import com.rongjingtaihegezheng.cert.utils.TTSUtils;
-import com.rongjingtaihegezheng.network.BaseNetApi;
-import com.rongjingtaihegezheng.network.Forground;
 import com.tbruyelle.rxpermissions.RxPermissions;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -70,8 +42,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import cpcl.PrinterHelper;
-import io.dcloud.PandoraEntryActivity;
-import io.dcloud.common.adapter.util.Logger;
 import rx.functions.Action1;
 
 
@@ -89,6 +59,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     private JSONObject prtInfo;
     private Callback printCallback;
     private Callback idcardCallback;
+    private Callback faceCallback;
     private int btIntentReqCode = 23550;
     private Boolean isConnectPrint = false;
     // 身份证start
@@ -106,6 +77,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     //身份证end
 
     //人脸识别 start
+    private int faceIntentReqCode = 23560;
     private boolean mFaceIsGranted;
     private String[] facePermissions = new String[]{
             android.Manifest.permission.CAMERA,
@@ -146,31 +118,18 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
 
         RootCmd.chmodShell(chmodCmdString);
         FileUtils.getInstance(mContext).copyAssetsToSD("wltlib", "wltlib");
+        //人脸识别start
+        mFaceIsGranted = true;
+        for (int i = 0; i < facePermissions.length; i++) {
+            if (!PermissionUtils.isGranted(facePermissions[i])) {
+                mFaceIsGranted = false;
+                break;
+            }
+        }
+        //人脸识别end
 //        getSystemMsg();
         //idcard end
 //        EnableBluetooth();
-        // 开启子线程
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(12000); // 等待
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                // 切换到主线程执行任务
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        // 在这里执行需要在主线程中处理的任务
-                        Intent intent = new Intent(thisCon, DetectActivity.class);
-                        startActivity(intent);
-                    }
-                });
-            }
-        }).start();
     }
 
     @Override
@@ -434,7 +393,6 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
             showMessage("未找到身份证照片解码库libwltdecode.so!", 0);
         }
          */
-
     }
 
     public static final String bytesToHexString(byte[] bArray, int bArrayLen) {
@@ -507,6 +465,33 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         }
     }
 
+    /**
+     * 启动人脸识别for js call
+     */
+    public void startFaceRecFromJs(String data, Callback callback) throws JSONException {
+        JSONObject result = new JSONObject(data);
+        String method = result.getString("method");
+        JSONObject dataObj = result.getJSONObject("data");
+        prtInfo = dataObj;
+        Log.e("rongjingtai", "dataObj is " + dataObj);
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Intent intent = new Intent(thisCon, DetectActivity.class);
+                            startActivityForResult(intent, faceIntentReqCode);
+                        }
+                    });
+                } catch (Exception e) {
+                }
+            }
+        }.start();
+        this.faceCallback = callback;
+    }
 
     /**
      * 启动打印for js call
