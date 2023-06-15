@@ -640,10 +640,12 @@ public class DetectActivity extends BaseActivity implements DetectView {
                                         find = "FAKE";
                                     }else {
                                         find = bean.mUserBean.compareScore+"";
+                                        Bitmap bitmap = bean.mUserBean.headImage;
                                     }
                                 }else {
                                     if(bean.mUserBean != null){
                                         find = bean.mUserBean.compareScore+"";
+                                        Bitmap bitmap = bean.mUserBean.headImage;
                                     }
                                 }
                                 stringBuilder.append("< Find " + find + " >");
