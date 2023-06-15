@@ -633,6 +633,7 @@ public class DetectActivity extends BaseActivity implements DetectView {
                                 stringBuilder.append("\n");
                             } else {
                                 String find = "";
+                                Bitmap bitmap;
                                 if (ConfigLib.detectWithLiveness || ConfigLib.detectWithInfraredLiveness || ConfigLib.doubleCameraWithInfraredLiveness) {
                                     if (bean.mLiveBean != null && bean.mLiveBean.livenessTag == bean.mLiveBean.UNKNOWN) {
                                         find = "UNKNOWN";
@@ -640,12 +641,12 @@ public class DetectActivity extends BaseActivity implements DetectView {
                                         find = "FAKE";
                                     }else {
                                         find = bean.mUserBean.compareScore+"";
-                                        Bitmap bitmap = bean.mUserBean.headImage;
+                                        bitmap = bean.mUserBean.headImage;
                                     }
                                 }else {
                                     if(bean.mUserBean != null){
                                         find = bean.mUserBean.compareScore+"";
-                                        Bitmap bitmap = bean.mUserBean.headImage;
+                                        bitmap = bean.mUserBean.headImage;
                                     }
                                 }
                                 stringBuilder.append("< Find " + find + " >");
