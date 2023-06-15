@@ -24,5 +24,11 @@
     <string name="no_face">没有人脸</string>
     <string name="slot_card">刷卡</string>
     <string name="reset">重置</string>
-
+    <string name="authorization">授权</string>
+    <string name="authorization_not">不需要授权</string>
+    <string name="authorization_not_had">未授权</string>
+    <string name="authorization_fail">授权失败</string>
+    <string name="authorization_success">授权成功</string>
+    <string name="authorization_had">已经授权</string>
+    <string name="init_fail">初始化失败</string>
 </resources>

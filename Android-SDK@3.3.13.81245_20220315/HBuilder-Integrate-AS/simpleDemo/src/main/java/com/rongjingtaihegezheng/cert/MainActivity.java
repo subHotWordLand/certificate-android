@@ -1,5 +1,6 @@
 package com.rongjingtaihegezheng.cert;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -10,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.Camera;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
@@ -29,6 +31,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.aiwinn.base.util.PermissionUtils;
+import com.aiwinn.base.util.ToastUtils;
+import com.aiwinn.facedetectsdk.FaceDetectManager;
+import com.aiwinn.facedetectsdk.common.Constants;
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
@@ -36,6 +42,9 @@ import com.amap.api.location.AMapLocationListener;
 import com.example.r01lib.WTR01;
 import com.ivsign.android.IDCReader.IDCReaderSDK;
 import com.mtreader.MTReaderEngine;
+import com.rongjingtaihegezheng.cert.common.AttConstants;
+import com.rongjingtaihegezheng.cert.common.AttParams;
+import com.rongjingtaihegezheng.cert.utils.TTSUtils;
 import com.rongjingtaihegezheng.network.BaseNetApi;
 import com.rongjingtaihegezheng.network.Forground;
 import com.tbruyelle.rxpermissions.RxPermissions;
@@ -66,7 +75,7 @@ import io.dcloud.common.adapter.util.Logger;
 import rx.functions.Action1;
 
 
-public class MainActivity extends CheckPermissionsActivity {
+public class MainActivity extends CheckPermissionsActivity implements PermissionUtils.FullCallback {
     private Context thisCon = null;
     private BluetoothAdapter mBluetoothAdapter;
     private Handler handler;
@@ -96,6 +105,16 @@ public class MainActivity extends CheckPermissionsActivity {
     private long startTime;
     //身份证end
 
+    //人脸识别 start
+    private boolean mFaceIsGranted;
+    private String[] facePermissions = new String[]{
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.READ_PHONE_STATE,
+
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE
+    };
+    //人脸识别 end
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -135,7 +154,7 @@ public class MainActivity extends CheckPermissionsActivity {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(6000); // 等待
+                    Thread.sleep(12000); // 等待
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -152,6 +171,84 @@ public class MainActivity extends CheckPermissionsActivity {
                 });
             }
         }).start();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mFaceIsGranted) {
+            if (!AttConstants.INIT_STATE) {
+                com.aiwinn.base.util.FileUtils.createOrExistsDir(Constants.PATH_LIVE_SAVE);
+                com.aiwinn.base.util.FileUtils.createOrExistsDir(AttConstants.PATH_AIWINN);
+                com.aiwinn.base.util.FileUtils.createOrExistsDir(AttConstants.PATH_ATTENDANCE);
+                com.aiwinn.base.util.FileUtils.createOrExistsDir(AttConstants.PATH_BULK_REGISTRATION);
+                com.aiwinn.base.util.FileUtils.createOrExistsDir(AttConstants.PATH_CARD);
+                int cameraCount = Camera.getNumberOfCameras();
+                if (cameraCount == 0) {
+                    ToastUtils.showShort("设备没有摄像头");
+                }
+
+                AttParams.initSpParams();
+
+                TTSUtils.initSpeech(mContext);
+
+                /**
+                 * 授权方式分为"定制渠道号授权"和"序列号授权"两种方式，请联系FAE或者商务了解你们的授权方式
+                 * 1.定制渠道号授权参考"授权-渠道号授权"
+                 * 2.序列号授权参考“授权-序列号单个授权”、“授权-序列号批量授权”
+                 */
+                //获取是否为定制的渠道号授权
+                int faceAuthType = AttApp.sp.getInt(AttConstants.PREFS_AUTH_FACE_TYPE, 0);
+                String faceAContent = AttApp.sp.getString(AttConstants.PREFS_AUTH_FACE_SERIAL_ID, "");
+                if (faceAuthType == 0) {
+                    //定制渠道号授权，此处不需要额外处理
+                } else if (faceAuthType == 1) {
+                    //设置序列号到SDK
+                    //请输入购买的单个授权序列号
+                    FaceDetectManager.setSerialId(faceAContent);
+                } else if (faceAuthType == 2) {
+                    //设置序列号到SDK
+                    //请输入购买的批量授权序列号
+                    FaceDetectManager.setSerialGroup(faceAContent);
+                }
+
+                if (!FaceDetectManager.isLicenseVersion()) {//SDK版本分测试有效期和网络授权版本,授权版本客户按业务处理授权时机
+                    //测试有效期版本,直接初始化
+                    AttApp.initSDK();
+                } else {
+                    //网络授权版本
+                    //1、第一次授权, 业务需要直接初始化并完成授权可不用做判断直接初始化
+                    //AttApp.initSDK();
+
+                    //2、第一次授权, 业务需要例如有授权按钮需求的,可以将初始化放到点击授权处处理, demo使用这种处理方式
+                    if (FaceDetectManager.isLicensed(getApplicationContext())) {
+                        //已授权,直接初始化
+                        AttApp.initSDK();
+                    }
+                }
+                AttConstants.Detect_Exception = false;
+            }
+            Log.d("onResume", "MainActivity -> onResume > Detect_Exception " + AttConstants.Detect_Exception + " INIT_STATE " + AttConstants.INIT_STATE);
+//            if(AttConstants.Detect_Exception && checkInitState()) {
+//                mIntent.setClass(MainActivity.this, DetectActivity.class);
+//                startActivity(mIntent);
+//            }
+        } else {
+            PermissionUtils.permission(facePermissions).callback(this).request();
+        }
+    }
+
+    boolean checkInitState() {
+        if (FaceDetectManager.isLicenseVersion() && !FaceDetectManager.isLicensed(mContext)) {
+            ToastUtils.showLong(getResources().getString(R.string.authorization_not_had));
+            return false;
+        }
+        if (!AttConstants.INIT_STATE) {
+            ToastUtils.showLong(getResources().getString(R.string.init_fail) + " : " + AttConstants.INIT_STATE_ERROR);
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private void getSystemMsg() {
@@ -700,6 +797,17 @@ public class MainActivity extends CheckPermissionsActivity {
                 Log.e("rongjingtai", (new StringBuilder("Activity_Main --> printResult ")).append(e.getMessage()).toString());
             }
         }
+    }
+
+    //人脸权限通知
+    @Override
+    public void onGranted(List<String> list) {
+        mFaceIsGranted = true;
+    }
+
+    @Override
+    public void onDenied(List<String> list, List<String> list1) {
+        mFaceIsGranted = false;
     }
 
     @Override
