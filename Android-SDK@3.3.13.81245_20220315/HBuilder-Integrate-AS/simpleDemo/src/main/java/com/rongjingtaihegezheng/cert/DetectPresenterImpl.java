@@ -1,8 +1,11 @@
 package com.rongjingtaihegezheng.cert;
 
+import android.graphics.Bitmap;
 import android.text.TextUtils;
 
 import com.aiwinn.base.module.log.LogUtils;
+import com.aiwinn.base.util.ScreenUtils;
+import com.aiwinn.facedetectsdk.common.ConfigLib;
 import com.rongjingtaihegezheng.cert.common.AttConstants;
 import com.rongjingtaihegezheng.cert.DetectView;
 import com.aiwinn.facedetectsdk.FaceDetectManager;
@@ -14,8 +17,11 @@ import com.aiwinn.facedetectsdk.common.Status;
 import com.aiwinn.facedetectsdk.listener.DebugRecognizeListener;
 import com.aiwinn.facedetectsdk.listener.InfraredLiveListener;
 import com.aiwinn.facedetectsdk.listener.RecognizeListener;
+import com.rongjingtaihegezheng.cert.utils.FaceUtils;
 
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * com.aiwinn.faceattendance.ui.p
@@ -32,11 +38,14 @@ public class DetectPresenterImpl implements DetectPresenter {
 
     public DetectPresenterImpl(DetectView detectView) {
         mDetectView = detectView;
+        mLandScape = AttConstants.PORTRAIT_LANDSCAPE || ScreenUtils.isLandscape();
     }
+
+    private boolean mLandScape;
 
     @Override
     public void detectFaceData(final byte[] data, final int w, final int h) {
-        FaceDetectManager.recognizeFace(AttConstants.DETECT_DEFAULT?"":AttConstants.EXDB,data, w, h, new RecognizeListener() {
+        FaceDetectManager.recognizeFace(AttConstants.DETECT_DEFAULT ? "" : AttConstants.EXDB, data, w, h, new RecognizeListener() {
             @Override
             public void onDetectFace(List<FaceBean> faceBeanList) {
                 //探测人脸结果回调，人脸框位置、活体状态、识别成功后跟踪识别信息
@@ -54,13 +63,69 @@ public class DetectPresenterImpl implements DetectPresenter {
 
 
                 if (faceBeanList.size() > 0) {
-                    mDetectView.detectFace(faceBeanList);
-                    LogUtils.d(DetectPresenterImpl.HEAD,"faceBeanList_mDetectBean_id=" + faceBeanList.get(0).mDetectBean.id);
+                    // 使用 map 方法对 List 中的元素进行操作
+                    List<DetectBean> detectBeanList = faceBeanList.stream()
+                            .map(new Function<FaceBean, DetectBean>() {
+                                public DetectBean apply(FaceBean faceBean) {
+                                    // 在这里定义对每个元素进行的操作
+                                    return faceBean.mDetectBean; // 例如将每个元素乘以 2
+                                }
+                            })
+                            .collect(Collectors.toList());
+                    DetectBean maxFace = FaceUtils.findMaxFace(detectBeanList);
+                    com.aiwinn.base.log.LogUtils.d(HEAD, "blur = " + maxFace.blur + " light = " + maxFace.light);
+                    if (!checkFaceIsRight(maxFace, w, h)) {
+                        //没有居中
+                        return;
+                    }
+                    if (maxFace.blur > ConfigLib.blurRecognizeThreshold && maxFace.light > ConfigLib.minRegisterBrightness) {
+                        Bitmap bitmap = FaceDetectManager.yuvToBitmap(maxFace.faceBigPicData, w, h);
+                        if (bitmap == null) {
+//                            mView.onError(Status.Nv21ToBitmapFail);
+                        } else {
+                            mDetectView.detectFace(faceBeanList, maxFace, bitmap);
+//                            mView.faceInfo(bitmap, maxFace);
+                        }
+                    } else {
+//                        dealFaceInfoFinish();
+                    }
+
+                    LogUtils.d(DetectPresenterImpl.HEAD, "faceBeanList_mDetectBean_id=" + faceBeanList.get(0).mDetectBean.id);
                     //coverStatus == 0 戴口罩  coverStatus == 1 不戴口罩
                     LogUtils.d(HEAD, "detect mask = " + faceBeanList.get(0).mDetectBean.coverStatus);
                 } else {
                     mDetectView.detectNoFace();
                 }
+            }
+
+            boolean checkFaceIsRight(DetectBean detectBean, int width, int height) {
+                if (!mLandScape) {
+                    int bak = width;
+                    width = height;
+                    height = bak;
+                }
+                float x0 = detectBean.x0;
+                float y0 = detectBean.y0;
+                float x1 = detectBean.x1;
+                float y1 = detectBean.y1;
+                float w = x1 - x0;
+                float h = y1 - y0;
+                if (w > width
+                        || h > height
+                        || x0 < 0
+                        || y0 < 0
+                        || x1 > width
+                        || y1 > height) {
+                    com.aiwinn.base.log.LogUtils.d(HEAD, "detectBean.x1-detectBean.x0 = " + w);
+                    com.aiwinn.base.log.LogUtils.d(HEAD, "detectBean.y1-detectBean.y0 = " + h);
+                    com.aiwinn.base.log.LogUtils.d(HEAD, "detectBean.x1 = " + x1);
+                    com.aiwinn.base.log.LogUtils.d(HEAD, "detectBean.y1 = " + y1);
+                    com.aiwinn.base.log.LogUtils.d(HEAD, "image.getWidth() = " + width);
+                    com.aiwinn.base.log.LogUtils.d(HEAD, "image.getHeight() = " + height);
+                    com.aiwinn.base.log.LogUtils.d(HEAD, "check face fail : not center in pic");
+                    return false;
+                }
+                return true;
             }
 
             @Override
@@ -88,7 +153,7 @@ public class DetectPresenterImpl implements DetectPresenter {
                 LogUtils.d(HEAD, "recognize mask status = " + detectBean.coverStatus);
                 if (TextUtils.isEmpty(userBean.name)) {
                     mDetectView.recognizeFaceNotMatch(userBean);
-                }else {
+                } else {
                     mDetectView.recognizeFace(userBean);
                 }
             }
@@ -115,7 +180,7 @@ public class DetectPresenterImpl implements DetectPresenter {
             @Override
             public void onDetectFace(List<FaceBean> faceBeanList) {
                 LogUtils.d(HEAD, "onDetectLiveness size = " + faceBeanList.size());
-                if (faceBeanList.size() == 0){
+                if (faceBeanList.size() == 0) {
                     mDetectView.detectInfraredInfo("No Face");
                 } else {
                     mDetectView.detectInfraredInfo("Find Face " + faceBeanList.size());

@@ -1,5 +1,8 @@
 package com.rongjingtaihegezheng.cert;
 
+import android.graphics.Bitmap;
+
+import com.aiwinn.facedetectsdk.bean.DetectBean;
 import com.aiwinn.facedetectsdk.bean.FaceBean;
 import com.aiwinn.facedetectsdk.bean.UserBean;
 import com.aiwinn.facedetectsdk.common.Status;
@@ -23,7 +26,7 @@ public interface DetectView {
 
     void detectFail(Status status);
 
-    void detectFace(List<FaceBean> faceBeans);
+    void detectFace(List<FaceBean> faceBeans, DetectBean maxFace, Bitmap bitmap);
 
     void debug(FaceBean faceBean);
 

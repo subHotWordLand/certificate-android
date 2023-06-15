@@ -130,6 +130,29 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
 //        getSystemMsg();
         //idcard end
 //        EnableBluetooth();
+        // 开启子线程
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    Thread.sleep(12000); // 等待
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                // 切换到主线程执行任务
+//                Handler handler = new Handler(Looper.getMainLooper());
+//                handler.post(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        // 在这里执行需要在主线程中处理的任务
+//                        Intent intent = new Intent(thisCon, DetectActivity.class);
+//                        startActivity(intent);
+//                    }
+//                });
+//            }
+//        }).start();
+
     }
 
     @Override
@@ -662,6 +685,18 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 }
             } catch (Exception e) {
                 Log.e("rongjingtai", (new StringBuilder("Activity_Main --> onActivityResult ")).append(e.getMessage()).toString());
+            }
+            return;
+        } else if (requestCode == faceIntentReqCode) {
+            if (data == null) return;
+            if (faceCallback != null) {
+                String imgBase64 = data.getStringExtra("imageData");
+                //通知uniapp
+                HashMap<String, Object> info = new HashMap<String, Object>();
+                info.put("imgBase64", imgBase64);
+                JSONObject r = new JSONObject(info);
+                String rstr = r.toString();
+                faceCallback.result(1, rstr);
             }
             return;
         }

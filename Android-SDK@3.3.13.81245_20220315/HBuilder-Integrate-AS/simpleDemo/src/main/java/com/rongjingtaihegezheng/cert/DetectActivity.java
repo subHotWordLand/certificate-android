@@ -1,10 +1,12 @@
 package com.rongjingtaihegezheng.cert;
 
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Message;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Base64;
 import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
@@ -24,6 +26,7 @@ import com.aiwinn.base.camera.CameraUtil;
 import com.aiwinn.base.camera.ICamera;
 import com.aiwinn.base.camera.Size;
 import com.aiwinn.base.log.LogUtils;
+import com.aiwinn.base.util.ImageUtils;
 import com.aiwinn.base.util.ScreenUtils;
 import com.aiwinn.base.util.StringUtils;
 import com.aiwinn.base.util.TimeUtils;
@@ -32,6 +35,7 @@ import com.aiwinn.base.widget.CameraSurfaceView;
 import com.aiwinn.deblocks.utils.FeatureUtils;
 import com.rongjingtaihegezheng.cert.adapter.DetectAdapter;
 import com.rongjingtaihegezheng.cert.bean.DetectFaceBean;
+import com.rongjingtaihegezheng.cert.utils.FaceUtils;
 import com.rongjingtaihegezheng.cert.utils.TTSUtils;
 import com.aiwinn.facedetectsdk.FaceDetectManager;
 import com.aiwinn.facedetectsdk.bean.DetectBean;
@@ -43,9 +47,12 @@ import com.aiwinn.facedetectsdk.listener.ExtractFeatureListener;
 import com.bumptech.glide.Glide;
 import com.rongjingtaihegezheng.cert.common.AttConstants;
 
+import java.io.ByteArrayOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * com.aiwinn.faceattendance.ui.m
@@ -89,11 +96,11 @@ public class DetectActivity extends BaseActivity implements DetectView {
     private BaseCamera mRedCamera;
     private int mInfraDataDegree;
 
-    void doAsync(){
+    void doAsync() {
         isAsyncDoing = true;
     }
 
-    void doAsyncDone(){
+    void doAsyncDone() {
         isAsyncDoing = false;
     }
 
@@ -164,7 +171,7 @@ public class DetectActivity extends BaseActivity implements DetectView {
         mImCompareWait = findViewById(R.id.imcomparewait);
         mImCompareSucc = findViewById(R.id.imcomparesucc);
         mSurfaceView1 = findViewById(R.id.sv);
-        if (AttConstants.PREVIEW_MIRROR){
+        if (AttConstants.PREVIEW_MIRROR) {
             mSurfaceView1.setScaleX(-mSurfaceView1.getScaleX());
         }
         mSurfaceView2 = findViewById(R.id.sv_2);
@@ -259,6 +266,7 @@ public class DetectActivity extends BaseActivity implements DetectView {
         }
         return false;
     }
+
     /**
      * 处理预览显示不变形，显示view显示比例需要和打开相机分辨率一致
      */
@@ -363,7 +371,7 @@ public class DetectActivity extends BaseActivity implements DetectView {
         @Override
         public void cameraData(byte[] data, CameraConfig config) {
             if (config.getCameraId() == AttConstants.CAMERA_ID) {
-                if (mCurrentPicData == null){
+                if (mCurrentPicData == null) {
                     mCurrentPicData = new byte[data.length];
                 }
                 System.arraycopy(data, 0, mCurrentPicData, 0, mCurrentPicData.length);
@@ -378,7 +386,7 @@ public class DetectActivity extends BaseActivity implements DetectView {
         }
     };
 
-    private int[] getSize(){
+    private int[] getSize() {
         switch (AttConstants.CAMERA_PREVIEW_HEIGHT) {
             case 640:
                 return new int[]{480, 640};
@@ -427,9 +435,9 @@ public class DetectActivity extends BaseActivity implements DetectView {
     }
 
     //模拟刷卡读取身份证头像并提取人脸特征值
-    private void extractFeature(){
+    private void extractFeature() {
         doAsync();
-        if (mCurrentPicData == null){
+        if (mCurrentPicData == null) {
             doAsyncDone();
             return;
         }
@@ -437,12 +445,12 @@ public class DetectActivity extends BaseActivity implements DetectView {
         resetCompare();
         showSlotCardState(getResources().getString(R.string.parse_begin));
         Glide.with(DetectActivity.this).load(bitmap).into(mImCompareWait);
-        LogUtils.d(DetectPresenterImpl.HEAD,"extractFeatureASync Parsing");
+        LogUtils.d(DetectPresenterImpl.HEAD, "extractFeatureASync Parsing");
         FaceDetectManager.extractFeatureASync(bitmap, new ExtractFeatureListener() {
 
             @Override
             public void onSuccess(DetectBean detectBean, ArrayList<Float> floats) {
-                LogUtils.d(DetectPresenterImpl.HEAD,"extractFeatureASync success");
+                LogUtils.d(DetectPresenterImpl.HEAD, "extractFeatureASync success");
                 showSlotCardState(getResources().getString(R.string.parse_success));
                 features.clear();
                 features.addAll(floats);
@@ -451,14 +459,14 @@ public class DetectActivity extends BaseActivity implements DetectView {
 
             @Override
             public void onError(final Status code) {
-                LogUtils.d(DetectPresenterImpl.HEAD,"extractFeatureASync fail : "+code.toString());
-                showSlotCardState(getResources().getString(R.string.parse_fail)+" : "+code.toString());
+                LogUtils.d(DetectPresenterImpl.HEAD, "extractFeatureASync fail : " + code.toString());
+                showSlotCardState(getResources().getString(R.string.parse_fail) + " : " + code.toString());
                 doAsyncDone();
             }
         });
     }
 
-    private void resetCompare(){
+    private void resetCompare() {
         mImCompareWait.setImageDrawable(null);
         mImCompareSucc.setImageDrawable(null);
         mTvCompareMsg.setText("");
@@ -469,11 +477,11 @@ public class DetectActivity extends BaseActivity implements DetectView {
     protected void onResume() {
         super.onResume();
         AttConstants.Detect_Exception = true;
-        if (mRgbCamera != null){
+        if (mRgbCamera != null) {
             showDialog(getResources().getString(R.string.load_camera));
             mRgbCamera.onResume();
         }
-        if (ConfigLib.doubleCameraWithInfraredLiveness){
+        if (ConfigLib.doubleCameraWithInfraredLiveness) {
             if (mRedCamera != null) mRedCamera.onResume();
         }
     }
@@ -491,7 +499,7 @@ public class DetectActivity extends BaseActivity implements DetectView {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.d("onResume","DetectActivity -> onDestroy > Detect_Exception "+AttConstants.Detect_Exception +" INIT_STATE "+AttConstants.INIT_STATE);
+        Log.d("onResume", "DetectActivity -> onDestroy > Detect_Exception " + AttConstants.Detect_Exception + " INIT_STATE " + AttConstants.INIT_STATE);
         detectList.clear();
         mHandler.removeCallbacksAndMessages(null);
         mHandler = null;
@@ -513,8 +521,9 @@ public class DetectActivity extends BaseActivity implements DetectView {
     int detectFrame = 4;
     int nowFrame = initFrame;
     boolean checkFrame = false;
-    boolean check(){
-        if(!checkFrame){
+
+    boolean check() {
+        if (!checkFrame) {
             nowFrame++;
             dissmisDialog();
             if (nowFrame >= detectFrame) {
@@ -541,12 +550,12 @@ public class DetectActivity extends BaseActivity implements DetectView {
                         LogUtils.d(DetectPresenterImpl.HEAD, "RecognitionFace face add new + " + detectList.size());
                         detectList.add(0, detectFaceBean);
                     }
-                    if(detectList.size() > AttConstants.DETECT_LIST_SIZE){
+                    if (detectList.size() > AttConstants.DETECT_LIST_SIZE) {
                         List<DetectFaceBean> list = new ArrayList<>();
                         list.clear();
                         list.addAll(detectList);
                         detectList.clear();
-                        detectList.addAll(list.subList(0,AttConstants.DETECT_LIST_SIZE));
+                        detectList.addAll(list.subList(0, AttConstants.DETECT_LIST_SIZE));
                     }
                     mDetectAdapter.replaceData(detectList);
                 }
@@ -563,25 +572,25 @@ public class DetectActivity extends BaseActivity implements DetectView {
 
     //比对人证相似度
     private void compareSlotCard(UserBean userBean) {
-        LogUtils.d(DetectPresenterImpl.HEAD,"extractFeatureASync find recognizeFaceNotMatch");
+        LogUtils.d(DetectPresenterImpl.HEAD, "extractFeatureASync find recognizeFaceNotMatch");
         ArrayList<Float> floatArrayList = new ArrayList<>();
         floatArrayList.clear();
         floatArrayList.addAll(features);
         final float compare = FaceDetectManager.compareFeature(FeatureUtils.arrayListToFloat(floatArrayList), FeatureUtils.arrayListToFloat(userBean.features));
-        LogUtils.d(DetectPresenterImpl.HEAD,"extractFeatureASync find recognizeFaceNotMatch : "+compare);
+        LogUtils.d(DetectPresenterImpl.HEAD, "extractFeatureASync find recognizeFaceNotMatch : " + compare);
         if (compare > ConfigLib.featureThreshold) {
             Message message = Message.obtain();
             message.obj = userBean.headImage;
             message.what = MSG_FACE;
             mHandler.sendMessage(message);
             features.clear();
-            showSlotCardState(getResources().getString(R.string.match_success)+" : "+compare);
-        }else {
-            showSlotCardState(getResources().getString(R.string.match_fail)+" : "+compare);
+            showSlotCardState(getResources().getString(R.string.match_success) + " : " + compare);
+        } else {
+            showSlotCardState(getResources().getString(R.string.match_fail) + " : " + compare);
         }
     }
 
-    private void showSlotCardState(final String state){
+    private void showSlotCardState(final String state) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -614,8 +623,15 @@ public class DetectActivity extends BaseActivity implements DetectView {
         }
     }
 
+    public String bitmapToBase64(Bitmap bitmap) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
+        return Base64.encodeToString(byteArray, Base64.DEFAULT);
+    }
+
     @Override
-    public void detectFace(final List<FaceBean> faceBeans) {
+    public void detectFace(final List<FaceBean> faceBeans, DetectBean maxFace, Bitmap bitmap) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -633,27 +649,24 @@ public class DetectActivity extends BaseActivity implements DetectView {
                                 stringBuilder.append("\n");
                             } else {
                                 String find = "";
-                                Bitmap bitmap;
                                 if (ConfigLib.detectWithLiveness || ConfigLib.detectWithInfraredLiveness || ConfigLib.doubleCameraWithInfraredLiveness) {
                                     if (bean.mLiveBean != null && bean.mLiveBean.livenessTag == bean.mLiveBean.UNKNOWN) {
                                         find = "UNKNOWN";
-                                    }else if (bean.mLiveBean != null && bean.mLiveBean.livenessTag == bean.mLiveBean.FAKE) {
+                                    } else if (bean.mLiveBean != null && bean.mLiveBean.livenessTag == bean.mLiveBean.FAKE) {
                                         find = "FAKE";
-                                    }else {
-                                        find = bean.mUserBean.compareScore+"";
-                                        bitmap = bean.mUserBean.headImage;
+                                    } else {
+                                        find = bean.mUserBean.compareScore + "";
                                     }
-                                }else {
-                                    if(bean.mUserBean != null){
-                                        find = bean.mUserBean.compareScore+"";
-                                        bitmap = bean.mUserBean.headImage;
+                                } else {
+                                    if (bean.mUserBean != null) {
+                                        find = bean.mUserBean.compareScore + "";
                                     }
                                 }
                                 stringBuilder.append("< Find " + find + " >");
                                 stringBuilder.append("\n");
                             }
                         }
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                     sendDebugMessage(stringBuilder.toString());
@@ -661,12 +674,28 @@ public class DetectActivity extends BaseActivity implements DetectView {
                     if (System.currentTimeMillis() - lastDebugText > 1000) {
                         mDebug.setText("");
                     }
+                    Bitmap clipBitmap = FaceUtils.createBitmapfromDetectBean(maxFace, bitmap);
+                    if (AttConstants.CAMERA_ID == 1 && AttConstants.CAMERA_DEGREE == 90) {
+                        Bitmap rotBitmap = ImageUtils.rotate(clipBitmap, 180, 0, 0);
+                        clipBitmap = Bitmap.createBitmap(rotBitmap);
+                    }
+                    String bitmapBase64 = null;
+                    if (clipBitmap != null) {
+                        bitmapBase64 = bitmapToBase64(clipBitmap);
+                    }
+                    if (bitmapBase64 != null) {
+                        Intent intent = new Intent();
+                        intent.putExtra("imageData", bitmapBase64);
+                        setResult(0, intent);
+                        finish();
+                    }
                 }
             }
         });
     }
 
     long lastDebugText = 0;
+
     @Override
     public void debug(final FaceBean faceBean) {
         if (faceBean != null && faceBean.mDetectBean != null) {
@@ -674,7 +703,7 @@ public class DetectActivity extends BaseActivity implements DetectView {
                 @Override
                 public void run() {
                     lastDebugText = System.currentTimeMillis();
-                    mDebug.setText("Remove :"+"\n"+"ID = "+faceBean.mDetectBean.id+"\n"+"Reason = "+faceBean.mDetectBean.faceState);
+                    mDebug.setText("Remove :" + "\n" + "ID = " + faceBean.mDetectBean.id + "\n" + "Reason = " + faceBean.mDetectBean.faceState);
                 }
             });
         }
