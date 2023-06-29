@@ -8,12 +8,15 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -31,6 +34,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -690,18 +694,30 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         } else if (requestCode == faceIntentReqCode) {
             if (data == null) return;
             if (faceCallback != null) {
-                String imgBase64 = data.getStringExtra("imageData");
-                //通知uniapp
-                HashMap<String, Object> info = new HashMap<String, Object>();
-                info.put("imgBase64", imgBase64);
-                JSONObject r = new JSONObject(info);
-                String rstr = r.toString();
-                faceCallback.result(1, rstr);
+                String imgBase64 = null;
+                byte[] idata = data.getByteArrayExtra("imageData");
+                if (idata != null) {
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(idata, 0, idata.length);
+                    imgBase64 = bitmapToBase64(bitmap);
+                    //通知uniapp
+                    HashMap<String, Object> info = new HashMap<String, Object>();
+                    info.put("imgBase64", imgBase64);
+                    JSONObject r = new JSONObject(info);
+                    String rstr = r.toString();
+                    faceCallback.result(1, rstr);
+                }
             }
             return;
         }
         //测试如果是js通知 这句加上会让onActivityResult执行两次导致打印机连接异常 查询了一下貌似是fragment引起的 https://www.jianshu.com/p/cbef02d0765d
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public String bitmapToBase64(Bitmap bitmap) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
+        return Base64.encodeToString(byteArray, Base64.DEFAULT);
     }
 
     private void connectBT(final String selectedBDAddress) {

@@ -622,14 +622,6 @@ public class DetectActivity extends BaseActivity implements DetectView {
             mHandler.sendMessage(message);
         }
     }
-
-    public String bitmapToBase64(Bitmap bitmap) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream.toByteArray();
-        return Base64.encodeToString(byteArray, Base64.DEFAULT);
-    }
-
     @Override
     public void detectFace(final List<FaceBean> faceBeans, DetectBean maxFace, Bitmap bitmap) {
         runOnUiThread(new Runnable() {
@@ -680,12 +672,15 @@ public class DetectActivity extends BaseActivity implements DetectView {
                         clipBitmap = Bitmap.createBitmap(rotBitmap);
                     }
                     String bitmapBase64 = null;
+                    byte[] bytesArrayBmp = null;
                     if (clipBitmap != null) {
-                        bitmapBase64 = bitmapToBase64(clipBitmap);
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        clipBitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
+                        bytesArrayBmp = baos.toByteArray();
                     }
-                    if (bitmapBase64 != null) {
+                    if (bytesArrayBmp != null) {
                         Intent intent = new Intent();
-                        intent.putExtra("imageData", bitmapBase64);
+                        intent.putExtra("imageData", bytesArrayBmp);
                         setResult(0, intent);
                         finish();
                     }
