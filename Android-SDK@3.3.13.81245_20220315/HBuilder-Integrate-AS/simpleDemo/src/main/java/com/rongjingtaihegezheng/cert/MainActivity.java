@@ -661,6 +661,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                                 showMessage(thisCon.getString(R.string.activity_main_connected), 1);
                                 showMessage("Name:" + ptdevice.getProductName(), 1);
                                 isConnectPrint = true;
+                                printResult();
                             }
                         } else {
                             return;
