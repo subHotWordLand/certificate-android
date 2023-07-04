@@ -6,11 +6,16 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -39,6 +44,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +62,6 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     private PendingIntent mPermissionIntent = null;
     private ProgressDialog dialog;
     public static String paper = "0";
-    private String ConnectType = "";
     private ExecutorService executorService;
     private static String[] PERMISSIONS_STORAGE = {"android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE"};
     private static String[] wifi_PERMISSIONS = {"android.permission.CHANGE_WIFI_STATE", "android.permission.ACCESS_WIFI_STATE"};
@@ -66,6 +71,12 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     private Callback faceCallback;
     private int btIntentReqCode = 23550;
     private Boolean isConnectPrint = false;
+    private String printConnectType = "";
+    private UsbManager ptmUsbManager = null;
+    private UsbDevice ptdevice = null;
+    private PendingIntent ptmPermissionIntent = null;
+    private static final String ACTION_USB_PERMISSION = "com.HPRTSDKSample";
+
     // 身份证start
     //身份证识别实例
     private MTReaderEngine SDTAPI = null;
@@ -97,6 +108,13 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         super.onCreate(savedInstanceState);
         thisCon = this;
         mContext = this;
+        //打印机 start
+        ptmPermissionIntent = PendingIntent.getBroadcast(thisCon, 0, new Intent(ACTION_USB_PERMISSION), 0);
+        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        thisCon.registerReceiver(ptmUsbReceiver, filter);
+        //打印机 end
+
         //idcard start
         SDTAPI = MTReaderEngine.getInstance();
         mUsbDevPermission = new UsbDevPermission(thisCon);
@@ -480,7 +498,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 @Override
                 public void call(Boolean aBoolean) {
                     if (aBoolean) {
-                        ConnectType = "Bluetooth";
+                        printConnectType = "Bluetooth";
                         Intent intent = new Intent(thisCon, BTActivity.class);
                         intent.putExtra("TAG", 0);
                         startActivityForResult(intent, btIntentReqCode);
@@ -488,7 +506,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 }
             });
         } catch (Exception e) {
-            Log.e("rongjingtai", (new StringBuilder("Activity_Main --> onClickConnect " + ConnectType)).append(e.getMessage()).toString());
+            Log.e("rongjingtai", (new StringBuilder("Activity_Main --> onClickConnect " + printConnectType)).append(e.getMessage()).toString());
         }
     }
 
@@ -571,6 +589,103 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         }
     }
 
+    /**
+     * 启动usb打印for js call
+     */
+    public void startUsbPrintFromJs(String data, Callback callback) throws JSONException {
+        JSONObject result = new JSONObject(data);
+        String method = result.getString("method");
+        JSONObject dataObj = result.getJSONObject("data");
+        prtInfo = dataObj;
+        Log.e("rongjingtai", "dataObj is " + dataObj);
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            //如果已经连接了的情况下直接打印
+                            if (isConnectPrint) {
+                                printResult();
+                                return;
+                            }
+                            printConnectType = "USB";
+                            //USB not need call "iniPort"
+                            ptmUsbManager = (UsbManager) thisCon.getSystemService(Context.USB_SERVICE);
+                            HashMap<String, UsbDevice> deviceList = ptmUsbManager.getDeviceList();
+                            Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
+
+                            boolean HavePrinter = false;
+                            while (deviceIterator.hasNext()) {
+                                ptdevice = deviceIterator.next();
+                                int count = ptdevice.getInterfaceCount();
+                                for (int i = 0; i < count; i++) {
+                                    UsbInterface intf = ptdevice.getInterface(i);
+                                    if (intf.getInterfaceClass() == 7) {
+                                        HavePrinter = true;
+                                        ptmUsbManager.requestPermission(ptdevice, mPermissionIntent);
+                                    }
+                                }
+                            }
+                            if (!HavePrinter) {
+                                showMessage(thisCon.getString(R.string.activity_main_connect_usb_printer), 1);
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    showMessage(e.getMessage(), 1);
+                }
+            }
+        }.start();
+        this.printCallback = callback;
+    }
+
+    private BroadcastReceiver ptmUsbReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            try {
+                String action = intent.getAction();
+                if (ACTION_USB_PERMISSION.equals(action)) {
+                    synchronized (this) {
+                        ptdevice = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                        if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                            Log.d("Print", "PID:" + ptdevice.getProductId() + " SN:" + ptdevice.getSerialNumber() + "VID:" + ptdevice.getVendorId() + "Name:" + ptdevice.getProductName());
+                            int i = PrinterHelper.portOpenUSB(thisCon, ptdevice);
+//							new HPRTPrinterHelper(thisCon,"TP801");
+//							int i =HPRTPrinterHelper.PortOpen(device);
+                            if (i != 0) {
+                                showMessage(thisCon.getString(R.string.activity_main_connecterr) + i, 1);
+                                return;
+                            } else {
+                                showMessage(thisCon.getString(R.string.activity_main_connected), 1);
+                                showMessage("Name:" + ptdevice.getProductName(), 1);
+                                isConnectPrint = true;
+                            }
+                        } else {
+                            return;
+                        }
+                    }
+                }
+                if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
+                    ptdevice = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    if (ptdevice != null) {
+                        int count = ptdevice.getInterfaceCount();
+                        for (int i = 0; i < count; i++) {
+                            UsbInterface intf = ptdevice.getInterface(i);
+                            //Class ID 7代表打印机
+                            if (intf.getInterfaceClass() == 7) {
+                                PrinterHelper.portClose();
+                                showMessage(thisCon.getString(R.string.activity_main_tips), 1);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e("SDKSample", (new StringBuilder("Activity_Main --> mUsbReceiver ")).append(e.getMessage()).toString());
+            }
+        }
+    };
 
     /**
      * 启动身份证识别for js call
@@ -849,7 +964,21 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     @Override
     public void onDestroy() {
         super.onDestroy();
+        //人脸usb监听
         mUsbDevPermission.unRegisterReceiver();
+        //打印机usb监听
+        try {
+            PrinterHelper.portClose();
+            if (ptmUsbReceiver != null) {
+                unregisterReceiver(ptmUsbReceiver);
+            }
+//            if (ptmReceiver != null) {
+//                unregisterReceiver(mReceiver);
+//            }
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
 }

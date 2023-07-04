@@ -45,7 +45,7 @@ public class AttConstants {
     public static int CAMERA_DEGREE_INFRARED = 0;
     public static int PREVIEW_DEGREE_INFRARED = 0;
 
-    public static int CAMERA_ID = 0;
+    public static int CAMERA_ID = 1;
     public static int CAMERA_DEGREE = 0;
     public static int PREVIEW_DEGREE = 0;
 
@@ -57,12 +57,12 @@ public class AttConstants {
 
     public static String SD_CARD = Environment.getExternalStorageDirectory().getAbsolutePath();
 
-    public static String PATH_AIWINN = SD_CARD+ File.separator+"aiwinn";
+    public static String PATH_AIWINN = SD_CARD + File.separator + "aiwinn";
 
-    public static String PATH_ATTENDANCE = PATH_AIWINN+ File.separator+"attendance";
+    public static String PATH_ATTENDANCE = PATH_AIWINN + File.separator + "attendance";
 
-    public static String PATH_BULK_REGISTRATION = PATH_ATTENDANCE+ File.separator+"bulkregistration";
-    public static String PATH_CARD = PATH_ATTENDANCE+ File.separator+"testslotcard";
+    public static String PATH_BULK_REGISTRATION = PATH_ATTENDANCE + File.separator + "bulkregistration";
+    public static String PATH_CARD = PATH_ATTENDANCE + File.separator + "testslotcard";
 
     public static final String PREFS_CAMERA_ID = "CAMERA_ID";
     public static final String PREFS_CAMERA_DEGREE = "CAMERA_DEGREE";
@@ -90,7 +90,7 @@ public class AttConstants {
     public static final String PREFS_LIVENESS_INFRAREDT_MASK2 = "LIVENESS_INFRAREDT_MASK2";
     public static final String PREFS_SET_RGB_CAM_PARAMS = "SET_RGB_CAM_PARAMS";
     public static final String PREFS_SET_IR_CAM_PARAMS = "SET_IR_CAM_PARAMS";
-    public static final String PREFS_SET_PREVIEW_MIRROR= "SET_PREVIEW_MIRROR";
+    public static final String PREFS_SET_PREVIEW_MIRROR = "SET_PREVIEW_MIRROR";
     public static final String PREFS_SET_MASK_RECOGNIZE = "SET_MASK_RECOGNIZE";
 
     public static final String PREFS_USEAWRGBLIVEVTYPE = "USEAWRGBLIVEVTYPE";

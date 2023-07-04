@@ -31,4 +31,9 @@
     <string name="authorization_success">授权成功</string>
     <string name="authorization_had">已经授权</string>
     <string name="init_fail">初始化失败</string>
+    <string name="activity_main_connect_usb_printer">请连接USB打印机。</string>
+    <string name="activity_main_connecterr">连接失败！</string>
+    <string name="activity_main_connected">连接成功！</string>
+    <string name="activity_main_tips">请连接打印机！</string>
+
 </resources>
