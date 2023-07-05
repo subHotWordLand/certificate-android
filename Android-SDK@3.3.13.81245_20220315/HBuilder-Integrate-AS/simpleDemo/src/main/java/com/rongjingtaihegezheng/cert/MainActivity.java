@@ -117,7 +117,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
 
         //idcard start
         SDTAPI = MTReaderEngine.getInstance();
-        mUsbDevPermission = new UsbDevPermission(thisCon);
+//        mUsbDevPermission = new UsbDevPermission(thisCon);
         initCmdList();
         List<String> serialLists = new ArrayList<String>();
         String[] serials = null;
