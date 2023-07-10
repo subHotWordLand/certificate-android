@@ -16,11 +16,28 @@ import static com.msprintsdk.UtilsTools.isCN;
 
 @SuppressWarnings("unused")
 public abstract class PrintCmd {
-
+    /**
+     * 退纸
+     *
+     * @param Lnumber
+     * @return
+     */
+    public static byte[] tuizhi(int Lnumber) {
+        byte[] bCmd = new byte[3];
+        int iIndex = 0;
+        bCmd[iIndex++] = 0x1B;
+        bCmd[iIndex++] = 0x4B;
+        if (Lnumber > 255)
+            bCmd[iIndex++] = (byte) 255;
+        else
+            bCmd[iIndex++] = (byte) Lnumber;
+        return bCmd;
+    }
 
     /**
      * 3.1 设置指令模式
-     *     描述：设置打印机指令模式
+     * 描述：设置打印机指令模式
+     *
      * @param iMode 2 EPIC模式、3 EPOS模式
      */
     public static byte[] SetCommmandmode(int iMode) {
@@ -37,19 +54,20 @@ public abstract class PrintCmd {
 
     /**
      * 3.2 清理缓存
-     *     描述：清理缓存，清除之前设置的参数
+     * 描述：清理缓存，清除之前设置的参数
      */
-    public static byte[] SetClean(){
+    public static byte[] SetClean() {
         byte[] bCmd = new byte[2];
         int iIndex = 0;
-        bCmd[iIndex++]= 0x1B;
-        bCmd[iIndex++]= 0x40;
+        bCmd[iIndex++] = 0x1B;
+        bCmd[iIndex++] = 0x40;
 
         return bCmd;
     }
 
     /**
      * 3.3 设定行间距
+     *
      * @param iLinespace 行间距，取值0-127，单位0.125mm
      */
     public static byte[] SetLinespace(int iLinespace) {
@@ -66,6 +84,7 @@ public abstract class PrintCmd {
 
     /**
      * 3.4 设置字符间距
+     *
      * @param iSpace 字符间距，取值0-64，单位0.125mm
      */
     public static byte[] SetSpacechar(int iSpace) {
@@ -82,6 +101,7 @@ public abstract class PrintCmd {
 
     /**
      * 3.5 设置汉字间距
+     *
      * @param iChsleftspace  汉字左空，取值0-64，单位0.125mm
      * @param iChsrightspace 汉字右空，取值0-64，单位0.125mm
      */
@@ -104,6 +124,7 @@ public abstract class PrintCmd {
 
     /**
      * 3.6 设置左边界
+     *
      * @param iLeftspace 取值0-576，单位0.125mm
      */
     public static byte[] SetLeftmargin(int iLeftspace) {
@@ -123,46 +144,49 @@ public abstract class PrintCmd {
 
     /**
      * 3.7 设置黑标切纸偏移量
+     *
      * @param iOffset 偏移量，取值0-1600
      */
-    public static byte[] SetMarkoffsetcut(int iOffset){
+    public static byte[] SetMarkoffsetcut(int iOffset) {
         byte[] bCmd = new byte[6];
         int iIndex = 0;
-        bCmd[iIndex++]=0x13;
-        bCmd[iIndex++]=0x74;
-        bCmd[iIndex++]=0x33;
-        bCmd[iIndex++]=0x78;
-        if(iOffset > 1600){
+        bCmd[iIndex++] = 0x13;
+        bCmd[iIndex++] = 0x74;
+        bCmd[iIndex++] = 0x33;
+        bCmd[iIndex++] = 0x78;
+        if (iOffset > 1600) {
             iOffset = 1600;
-        }else{
-            bCmd[iIndex++]=(byte) (iOffset>>8);
-            bCmd[iIndex++]=(byte) iOffset;
+        } else {
+            bCmd[iIndex++] = (byte) (iOffset >> 8);
+            bCmd[iIndex++] = (byte) iOffset;
         }
         return bCmd;
     }
 
     /**
      * 3.8 设置黑标打印进纸偏移量
+     *
      * @param iOffset 偏移量，取值 0-1600
      */
-    public static byte[] SetMarkoffsetprint(int iOffset){
+    public static byte[] SetMarkoffsetprint(int iOffset) {
         byte[] bCmd = new byte[6];
-        int iIndex=0;
-        bCmd[iIndex++]=0x13;
-        bCmd[iIndex++]=0x74;
-        bCmd[iIndex++]=0x11;
-        bCmd[iIndex++]=0x78;
-        if(iOffset > 1600){
+        int iIndex = 0;
+        bCmd[iIndex++] = 0x13;
+        bCmd[iIndex++] = 0x74;
+        bCmd[iIndex++] = 0x11;
+        bCmd[iIndex++] = 0x78;
+        if (iOffset > 1600) {
             iOffset = 1600;
-        }else{
-            bCmd[iIndex++]=(byte) (iOffset>>8);
-            bCmd[iIndex++]=(byte) iOffset;
+        } else {
+            bCmd[iIndex++] = (byte) (iOffset >> 8);
+            bCmd[iIndex++] = (byte) iOffset;
         }
         return bCmd;
     }
 
     /**
      * 3.9 设置汉字放大
+     *
      * @param iHeight      倍高     0 无效  1 有效
      * @param iWidth       倍宽     0 无效  1 有效
      * @param iUnderline   下划线   0 无效  1 有效
@@ -195,37 +219,39 @@ public abstract class PrintCmd {
 
     /**
      * 3.10 设置字符放大
-     * @param iHeight         倍高     0 无效  1 有效
-     * @param iWidth          倍宽     0 无效  1 有效
-     * @param iUnderline      下划线   0 无效  1 有效
-     * @param iAsciitype   ASCII字形   0: 12*24  1: 9*17
+     *
+     * @param iHeight    倍高     0 无效  1 有效
+     * @param iWidth     倍宽     0 无效  1 有效
+     * @param iUnderline 下划线   0 无效  1 有效
+     * @param iAsciitype ASCII字形   0: 12*24  1: 9*17
      */
-    public static byte[] SetSizechar(int iHeight,int iWidth,int iUnderline,int iAsciitype){
+    public static byte[] SetSizechar(int iHeight, int iWidth, int iUnderline, int iAsciitype) {
         byte[] bCmd = new byte[3];
-        int iIndex=0;
+        int iIndex = 0;
         int height = iHeight;
         int width = iWidth;
         int underline = iUnderline;
         int asciitype = iAsciitype;
-        if(height>1)
+        if (height > 1)
             height = 1;
-        if(iWidth>1)
+        if (iWidth > 1)
             width = 1;
-        if(underline>1)
+        if (underline > 1)
             underline = 1;
-        if(asciitype>1)
+        if (asciitype > 1)
             asciitype = 1;
 
-        int iSize = height*0x10+width*0x20+underline*0x80+asciitype*0x01;
-        bCmd[iIndex++]=0x1B;
-        bCmd[iIndex++]=0x21;
-        bCmd[iIndex++]=(byte) iSize;
+        int iSize = height * 0x10 + width * 0x20 + underline * 0x80 + asciitype * 0x01;
+        bCmd[iIndex++] = 0x1B;
+        bCmd[iIndex++] = 0x21;
+        bCmd[iIndex++] = (byte) iSize;
         return bCmd;
     }
 
     /**
      * 3.11 设置文本放大
-     * @param iWidth 宽度（1-8）
+     *
+     * @param iWidth  宽度（1-8）
      * @param iHeight 高度（1-8）
      */
     public static byte[] SetSizetext(int iWidth, int iHeight) {
@@ -248,6 +274,7 @@ public abstract class PrintCmd {
 
     /**
      * 3.12 设置字符对齐
+     *
      * @param iAlignment 0 左对齐，1 居中，2 右对齐
      */
     public static byte[] SetAlignment(int iAlignment) {
@@ -264,25 +291,27 @@ public abstract class PrintCmd {
 
     /**
      * 3.13 设置字体加粗
-     * @param iBold  0 不加粗,1 加粗
+     *
+     * @param iBold 0 不加粗,1 加粗
      */
     public static byte[] SetBold(int iBold) {
         byte[] bCmd = new byte[3];
         int iIndex = 0;
-        bCmd[iIndex++]= 0x1B;
-        bCmd[iIndex++]= 0x47;// 0x47 都可以加粗
-        if(iBold != 1)
-            bCmd[iIndex++]= 0;
+        bCmd[iIndex++] = 0x1B;
+        bCmd[iIndex++] = 0x47;// 0x47 都可以加粗
+        if (iBold != 1)
+            bCmd[iIndex++] = 0;
         else
-            bCmd[iIndex++]= 1;
+            bCmd[iIndex++] = 1;
         return bCmd;
     }
 
     /**
      * 3.14 设置字体旋转
+     *
      * @param iRotate 0 解除旋转,1 顺时针度旋转90°
      */
-    public static byte[] SetRotate(int iRotate){
+    public static byte[] SetRotate(int iRotate) {
         byte[] bCmd = new byte[3];
         int iIndex = 0;
         bCmd[iIndex++] = 0x1B;
@@ -296,16 +325,17 @@ public abstract class PrintCmd {
 
     /**
      * 3.15 设置字体方向
+     *
      * @param iDirection 0 左至右，1 旋转180度
      */
-    public static byte[] SetDirection(int iDirection){
+    public static byte[] SetDirection(int iDirection) {
         byte[] bCmd = new byte[3];
         int iIndex = 0;
         bCmd[iIndex++] = 0x1B;
         bCmd[iIndex++] = 0x7B;
-        if(iDirection != 1)
+        if (iDirection != 1)
             bCmd[iIndex++] = 0;
-        else{
+        else {
             bCmd[iIndex++] = 1;
         }
         return bCmd;
@@ -313,7 +343,8 @@ public abstract class PrintCmd {
 
     /**
      * 3.16 设定反白
-     * @param iWhite  0  取消反白，1 设置反白
+     *
+     * @param iWhite 0  取消反白，1 设置反白
      */
     public static byte[] SetWhitemodel(int iWhite) {
         byte[] bCmd = new byte[3];
@@ -329,14 +360,15 @@ public abstract class PrintCmd {
 
     /**
      * 3.17 设定斜体
-     * @param iItalic  0 取消斜体；1 设置斜体
+     *
+     * @param iItalic 0 取消斜体；1 设置斜体
      */
     public static byte[] SetItalic(int iItalic) {
         byte[] bCmd = new byte[3];
         int iIndex = 0;
         bCmd[iIndex++] = 0x1B;
         bCmd[iIndex++] = 0x25;
-        if(iItalic == 1)
+        if (iItalic == 1)
             bCmd[iIndex++] = 0x47;
         else
             bCmd[iIndex++] = 0x48;
@@ -345,8 +377,9 @@ public abstract class PrintCmd {
 
     /**
      * 3.18 设定下划线
+     *
      * @param underline 0  无， 1 一个点下划线，2 两个点下划线 ；其他无效
-     *      描述：设置下划线（字符，ASCII 都有效）
+     *                  描述：设置下划线（字符，ASCII 都有效）
      */
     public static byte[] SetUnderline(int underline) {
         byte[] bCmd = new byte[3];
@@ -362,8 +395,9 @@ public abstract class PrintCmd {
 
     /**
      * 3.19 设置汉字模式
+     *
      * @param mode 0 进入汉字模式；1 退出汉字模式
-     *      描述：设置汉字模式有无效
+     *             描述：设置汉字模式有无效
      */
     public static byte[] SetReadZKmode(int mode) {
         byte[] bCmd = new byte[2];
@@ -378,6 +412,7 @@ public abstract class PrintCmd {
 
     /**
      * 3.20 设置水平制表位置
+     *
      * @param bHTseat 水平制表的位置,从小到大,单位一个ASCII字符,不能为0
      * @param iLength 水平制表的位置数据的个数
      */
@@ -401,8 +436,9 @@ public abstract class PrintCmd {
 
     /**
      * 3.21 设置区域国家和代码页
+     *
      * @param country  区域国家 0   美国   1	法国      2	德国           3  英国    4  丹麦 I
-    5   瑞典   6	意大利  7	西班牙 I  8  日本    9  挪威  10 丹麦 II
+     *                 5   瑞典   6	意大利  7	西班牙 I  8  日本    9  挪威  10 丹麦 II
      * @param CPnumber 代码页             0  PC437[美国欧洲标准]     1 	 PC737    2	PC775
      *                 3   PC850   4	 PC852   5	PC855     6	 PC857    7	PC858   8  PC860   9  PC862
      *                 10  PC863  11	 PC864  12	PC865    13	 PC866   14	PC1251 15 PC1252  16  PC1253
@@ -433,52 +469,53 @@ public abstract class PrintCmd {
     /**
      * 3.22 打印自检页
      */
-    public static byte[] PrintSelfcheck(){
+    public static byte[] PrintSelfcheck() {
         byte[] bCmd = new byte[7];
-        int iIndex=0;
-        bCmd[iIndex++]=0x1D;
-        bCmd[iIndex++]=0x28;
-        bCmd[iIndex++]=0x41;
-        bCmd[iIndex++]=0x02;
-        bCmd[iIndex++]=0x00;
-        bCmd[iIndex++]=0x00;
-        bCmd[iIndex++]=0x02;
+        int iIndex = 0;
+        bCmd[iIndex++] = 0x1D;
+        bCmd[iIndex++] = 0x28;
+        bCmd[iIndex++] = 0x41;
+        bCmd[iIndex++] = 0x02;
+        bCmd[iIndex++] = 0x00;
+        bCmd[iIndex++] = 0x00;
+        bCmd[iIndex++] = 0x02;
         return bCmd;
     }
 
     /**
      * 3.23 打印走纸
+     *
      * @param iLine 走纸行数
-     * 描述：走纸，单位字符行
+     *              描述：走纸，单位字符行
      */
     public static byte[] PrintFeedline(int iLine) {
         byte[] bCmd = new byte[3];
         int iIndex = 0;
-        bCmd[iIndex++]= 0x1B;
-        bCmd[iIndex++]= 0x64;
-        bCmd[iIndex++]= (byte) iLine;
+        bCmd[iIndex++] = 0x1B;
+        bCmd[iIndex++] = 0x64;
+        bCmd[iIndex++] = (byte) iLine;
         return bCmd;
     }
 
     /**
      * 3.25 打印字符串
+     *
      * @param strData 打印的字符串内容
      * @param iImme   是否加换行指令0x0a： 0 加换行指令，1 不加换行指令
-     * @throws UnsupportedEncodingException
-     *     描述: 打印字符串，字符集为GB2312 入口参数：strData 打印的字符串内容，出口参数:byte[]数组
+     * @throws UnsupportedEncodingException 描述: 打印字符串，字符集为GB2312 入口参数：strData 打印的字符串内容，出口参数:byte[]数组
      */
-    public static byte[] PrintString(String strData ,int iImme)  {
+    public static byte[] PrintString(String strData, int iImme) {
         // 字符串转换为byte[]数组
         byte[] strAarry;
         try {
             strAarry = strData.getBytes("GB2312");
             int iLen = strAarry.length;
-            if(iImme==0)
+            if (iImme == 0)
                 iLen = iLen + 1;
             byte[] bCmd = new byte[iLen];
             System.arraycopy(strAarry, 0, bCmd, 0, strAarry.length);
-            if(iImme==0)
-                bCmd[iLen-1] = 0x0A;
+            if (iImme == 0)
+                bCmd[iLen - 1] = 0x0A;
 
             return bCmd;
         } catch (UnsupportedEncodingException e) {
@@ -491,7 +528,7 @@ public abstract class PrintCmd {
      * 3.26 打印并换行
      * 描述：打印内容并换行，无打印内容的时候走1空白行
      */
-    public static byte[] PrintChargeRow(){
+    public static byte[] PrintChargeRow() {
         byte[] bCmd = new byte[2];
         int iIndex = 0;
         bCmd[iIndex++] = 0x0A;
@@ -500,7 +537,8 @@ public abstract class PrintCmd {
 
     /**
      * 3.27 打印细走纸
-     * @param Lnumber  范围 0-250
+     *
+     * @param Lnumber 范围 0-250
      */
     public static byte[] PrintFeedDot(int Lnumber) {
         byte[] bCmd = new byte[3];
@@ -516,30 +554,31 @@ public abstract class PrintCmd {
 
     /**
      * 3.28 执行到下一个水平制表位置
-     *     描述：执行到下一个水平制表位置
+     * 描述：执行到下一个水平制表位置
      */
-    public static byte[] PrintNextHT(){
+    public static byte[] PrintNextHT() {
         byte[] bCmd = new byte[1];
-        int iIndex=0;
-        bCmd[iIndex++]=0x09;
+        int iIndex = 0;
+        bCmd[iIndex++] = 0x09;
         return bCmd;
     }
 
     /**
      * 3.29 打印切纸
+     *
      * @param iMode 0 全切，1半切
      */
     public static byte[] PrintCutpaper(int iMode) {
         byte[] bCmd = new byte[3];
         int iIndex = 0;
         if (iMode != 1) {
-            bCmd[iIndex++]= 0x1B;
-            bCmd[iIndex++]= 0x69;
+            bCmd[iIndex++] = 0x1B;
+            bCmd[iIndex++] = 0x69;
         } else {
-            bCmd[iIndex++]= 0x1B;
-            bCmd[iIndex++]= 0x6D;
+            bCmd[iIndex++] = 0x1B;
+            bCmd[iIndex++] = 0x6D;
         }
-        bCmd[iIndex++]= (byte) iMode;
+        bCmd[iIndex++] = (byte) iMode;
         return bCmd;
     }
 
@@ -547,10 +586,10 @@ public abstract class PrintCmd {
      * 3.30 检测黑标[之前有使用过]
      *     描述：黑标模式下检测黑标，停止在黑标位置
      */
-    public static byte[] PrintMarkposition(){
+    public static byte[] PrintMarkposition() {
         byte[] bCmd = new byte[1];
-        int iIndex=0;
-        bCmd[iIndex++]=0x0C;
+        int iIndex = 0;
+        bCmd[iIndex++] = 0x0C;
         return bCmd;
     }
 
@@ -558,29 +597,30 @@ public abstract class PrintCmd {
      * 3.31 检测黑标进纸到打印位置
      *     描述：黑标模式下检测黑标并进纸到打印位置（偏移量打印影响走纸距离）
      */
-    public static byte[] PrintMarkpositionPrint(){
+    public static byte[] PrintMarkpositionPrint() {
         byte[] bCmd = new byte[2];
-        int iIndex=0;
-        bCmd[iIndex++]=0x1B;
-        bCmd[iIndex++]=0x0C;
+        int iIndex = 0;
+        bCmd[iIndex++] = 0x1B;
+        bCmd[iIndex++] = 0x0C;
         return bCmd;
     }
 
     /**
      * 3.32 检测黑标进纸到切纸位置
-     *     描述：黑标模式下检测黑标并进纸到切纸位置（偏移量切纸影响走纸距离）
+     * 描述：黑标模式下检测黑标并进纸到切纸位置（偏移量切纸影响走纸距离）
      */
-    public static byte[] PrintMarkpositioncut(){
+    public static byte[] PrintMarkpositioncut() {
         byte[] bCmd = new byte[2];
-        int iIndex=0;
-        bCmd[iIndex++]=0x1D;
-        bCmd[iIndex++]=0x0C;
+        int iIndex = 0;
+        bCmd[iIndex++] = 0x1D;
+        bCmd[iIndex++] = 0x0C;
         return bCmd;
     }
 
     /**
      * 3.33 打印黑标切纸
-     * @param iMode  0 检测黑标全切，1 不检测黑标半切
+     *
+     * @param iMode 0 检测黑标全切，1 不检测黑标半切
      */
     public static byte[] PrintMarkcutpaper(int iMode) {
         byte[] bCmd = new byte[4];
@@ -598,7 +638,7 @@ public abstract class PrintCmd {
 
 
     // 13 51指令
-    public static byte[] PrintQrcode51(String strData,int iLmargin,int iMside,int iRound){
+    public static byte[] PrintQrcode51(String strData, int iLmargin, int iMside, int iRound) {
     /*     byte[] bCmd = new byte[50];
        QRCodeInfo codeInfo = new QRCodeInfo();
         codeInfo.setlMargin(iLmargin);
@@ -607,14 +647,16 @@ public abstract class PrintCmd {
         if(bCmd.length != 0)
             return bCmd;
         else*/
-            return null;
+        return null;
     }
+
     /**
      * 主板专用二维码打印【T500II+MS532II】
+     *
      * @param strData
      * @return
      */
-    public static byte[] PrintQrCodeT500II(int mSize,String strData) {
+    public static byte[] PrintQrCodeT500II(int mSize, String strData) {
         byte[] strArray;
         try {
             strArray = strData.getBytes("GB2312");
@@ -636,10 +678,10 @@ public abstract class PrintCmd {
             bCmd[iIndex++] = 0x50;
             bCmd[iIndex++] = 0x48;
             bCmd[iIndex++] = 0x3;
-            if(mSize < 1 || mSize > 9)   // 1-9
+            if (mSize < 1 || mSize > 9)   // 1-9
                 mSize = 5;
             else
-                bCmd[iIndex++] = (byte)mSize;
+                bCmd[iIndex++] = (byte) mSize;
 
             bCmd[iIndex++] = 0x13;
             bCmd[iIndex++] = 0x50;
@@ -663,6 +705,7 @@ public abstract class PrintCmd {
 
     /**
      * 3.36 打印PDF417码
+     *
      * @param iDotwidth    宽度，取值0-255
      * @param iDotheight   高度，取值0-255
      * @param iDatarows    行数
@@ -709,14 +752,15 @@ public abstract class PrintCmd {
 
     /**
      * 3.37 打印一维条码
+     *
      * @param iWidth    条码宽度，取值2-6 单位0.125mm
      * @param iHeight   条码高度，取值1-255 单位0.125mm
      * @param iHrisize  条码显示字符字型0 12*24 1 9*17
      * @param iHriseat  条码显示字符位置0 无、1 上、 2 下、3 上下
      * @param iCodetype 条码的类型（UPC-A 0,UPC-E 1,EAN13 2,EAN8 3, CODE39 4,
-     *                            ITF 5,CODABAR 6,Standard EAN13 7,
-     *                            Standard EAN8 8,CODE93 9,CODE128 10)
-     * @param strData  条码内容
+     *                  ITF 5,CODABAR 6,Standard EAN13 7,
+     *                  Standard EAN8 8,CODE93 9,CODE128 10)
+     * @param strData   条码内容
      */
     public static byte[] Print1Dbar(int iWidth, int iHeight, int iHrisize,
                                     int iHriseat, int iCodetype, String strData) {
@@ -915,7 +959,8 @@ public abstract class PrintCmd {
 
     /**
      * 根据指定路径的图片打印
-     *    支持图片内容为黑白两色的 BMP/JPG/PNG格式的文件
+     * 支持图片内容为黑白两色的 BMP/JPG/PNG格式的文件
+     *
      * @param strPath 文件路径
      * @return
      */
@@ -938,24 +983,24 @@ public abstract class PrintCmd {
         if (!strPath.substring(strPath.toLowerCase().indexOf(".") + 1).equals("bmp")) {
             bitmap = convertToBlackWhite(bitmap);
             int width = bitmap.getWidth();
-            int  heigh = bitmap.getHeight();
+            int heigh = bitmap.getHeight();
             int iDataLen = width * heigh;
             int[] pixels = new int[iDataLen];
             bitmap.getPixels(pixels, 0, width, 0, 0, width, heigh);
-            bytes = PrintDiskImagefile(pixels,width,heigh);
-        }else
-        {
+            bytes = PrintDiskImagefile(pixels, width, heigh);
+        } else {
             int width = bitmap.getWidth();
-            int  heigh = bitmap.getHeight();
+            int heigh = bitmap.getHeight();
             int iDataLen = width * heigh;
             int[] pixels = new int[iDataLen];
             bitmap.getPixels(pixels, 0, width, 0, 0, width, heigh);
-            bytes = PrintDiskImagefile(pixels,width,heigh);
+            bytes = PrintDiskImagefile(pixels, width, heigh);
 
         }
 
         return bytes;
     }
+
     public static byte[] PrintDiskImagefile(int[] pixels, int iWidth, int iHeight) {
         int iBw = iWidth / 8;
         int iMod = iWidth % 8;
@@ -985,35 +1030,35 @@ public abstract class PrintCmd {
                 iValue2 = 0;
 
                 iValue1 = pixels[iW++];
-                if(iValue1<-1)
-                    iValue2 = iValue2+0x80;
+                if (iValue1 < -1)
+                    iValue2 = iValue2 + 0x80;
                 iValue1 = pixels[iW++];
-                if(iValue1<-1)
-                    iValue2 = iValue2+0x40;
+                if (iValue1 < -1)
+                    iValue2 = iValue2 + 0x40;
                 iValue1 = pixels[iW++];
-                if(iValue1<-1)
-                    iValue2 = iValue2+0x20;
+                if (iValue1 < -1)
+                    iValue2 = iValue2 + 0x20;
                 iValue1 = pixels[iW++];
-                if(iValue1<-1)
-                    iValue2 = iValue2+0x10;
+                if (iValue1 < -1)
+                    iValue2 = iValue2 + 0x10;
                 iValue1 = pixels[iW++];
-                if(iValue1<-1)
-                    iValue2 = iValue2+0x8;
+                if (iValue1 < -1)
+                    iValue2 = iValue2 + 0x8;
                 iValue1 = pixels[iW++];
-                if(iValue1<-1)
-                    iValue2 = iValue2+0x4;
+                if (iValue1 < -1)
+                    iValue2 = iValue2 + 0x4;
                 iValue1 = pixels[iW++];
-                if(iValue1<-1)
-                    iValue2 = iValue2+0x2;
+                if (iValue1 < -1)
+                    iValue2 = iValue2 + 0x2;
                 iValue1 = pixels[iW++];
-                if(iValue1<-1)
-                    iValue2 = iValue2+0x1;
-                if(iValue3 < -1) // w1
+                if (iValue1 < -1)
+                    iValue2 = iValue2 + 0x1;
+                if (iValue3 < -1) // w1
                     iValue4 = iValue4 + 0x10;
                 bCmd[iIndex++] = (byte) (iValue2);
             }
             iValue2 = 0;
-            if(iValue4 > 0)      // w2
+            if (iValue4 > 0)      // w2
                 iValue3 = 1;
             if (iMod == 0) {
                 for (iCol = 8; iCol > iMod; iCol--) {
@@ -1034,12 +1079,12 @@ public abstract class PrintCmd {
     }
 
 
-
     /**
      * 3.39 打印NV BMP 文件  【可用，已通过测试】
-     * @param iNvindex  NV位图索引
-     * @param iMode     48 普通、49 倍宽、50 倍高、51 倍宽倍高(4倍大小)
-     *  描述：打印NV BMP文件，仅支持单色BMP文件
+     *
+     * @param iNvindex NV位图索引
+     * @param iMode    48 普通、49 倍宽、50 倍高、51 倍宽倍高(4倍大小)
+     *                 描述：打印NV BMP文件，仅支持单色BMP文件
      */
     public static byte[] PrintNvbmp(int iNvindex, int iMode) {
         byte[] bCmd = new byte[4];
@@ -1059,13 +1104,14 @@ public abstract class PrintCmd {
 
     /**
      * 3.42 获取打印机状态
-     * @return     0 打印机正常 、1 打印机未连接或未上电、2 打印机和调用库不匹配
-     *             3 打印头打开 、4 切刀未复位 、5 打印头过热 、6 黑标错误 、7 纸尽 、8 纸将尽
+     *
+     * @return 0 打印机正常 、1 打印机未连接或未上电、2 打印机和调用库不匹配
+     * 3 打印头打开 、4 切刀未复位 、5 打印头过热 、6 黑标错误 、7 纸尽 、8 纸将尽
      */
-    public static byte[] GetStatus(){
-        try{
+    public static byte[] GetStatus() {
+        try {
             byte[] b_send = new byte[12];
-            int iIndex=0;
+            int iIndex = 0;
             // 01 判断打印机是否连接正常
             b_send[iIndex++] = 0x10;
             b_send[iIndex++] = 0x04;
@@ -1083,7 +1129,7 @@ public abstract class PrintCmd {
             b_send[iIndex++] = 0x04;
             b_send[iIndex++] = 0x04;
             return b_send;
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -1166,7 +1212,8 @@ public abstract class PrintCmd {
 
     /**
      * 检测打印机状态
-     * @param  b_recv
+     *
+     * @param b_recv
      * @return int
      */
     public static int CheckStatus(byte[] b_recv) {
@@ -1222,20 +1269,20 @@ public abstract class PrintCmd {
     //10 04 05
     // 4 容纸器错误 5 堵纸  6 卡纸  7 拽纸 8 出纸传感器有纸
     public static int CheckStatus5(byte bRecv) {
-        if((bRecv & 0x80) == 0x80)
-            return 4;	//容纸器错误、
+        if ((bRecv & 0x80) == 0x80)
+            return 4;    //容纸器错误、
 
-        if((bRecv & 0x01) == 0x01)
-            return 5;	//5 堵纸
+        if ((bRecv & 0x01) == 0x01)
+            return 5;    //5 堵纸
 
-        if((bRecv & 0x08) == 0x08)
-            return 6;	//6 卡纸
+        if ((bRecv & 0x08) == 0x08)
+            return 6;    //6 卡纸
 
-        if((bRecv & 0x02) == 0x02)
-            return 7;	//7 拽纸
+        if ((bRecv & 0x02) == 0x02)
+            return 7;    //7 拽纸
 
-        if((bRecv & 0x04) == 0x04)
-            return 8;	//8 出纸传感器有纸
+        if ((bRecv & 0x04) == 0x04)
+            return 8;    //8 出纸传感器有纸
 
         return 0;
     }
@@ -1269,8 +1316,9 @@ public abstract class PrintCmd {
 
     /**
      * 3.44 获取打印机信息
-     * @param iFstype  信息类型： 1 打印头型号ID、2 类型ID、       3 软件版本、
-     *                        4 生产厂商信息、  5 打印机型号、 6 支持的中文编码格式
+     *
+     * @param iFstype 信息类型： 1 打印头型号ID、2 类型ID、       3 软件版本、
+     *                4 生产厂商信息、  5 打印机型号、 6 支持的中文编码格式
      */
     public static byte[] GetProductinformation(int iFstype) {
         byte[] b_send = new byte[3];
@@ -1278,45 +1326,47 @@ public abstract class PrintCmd {
             int iIndex = 0;
             b_send[iIndex++] = 0x1D;
             b_send[iIndex++] = 0x49;
-            b_send[iIndex++] = (byte)iFstype;
+            b_send[iIndex++] = (byte) iFstype;
         } catch (Exception e) {
             e.printStackTrace();
         }
         return b_send;
     }
+
     /**
      * 解析打印机产品信息
+     *
      * @param b_recv
      */
     public static String CheckProductinformation(byte[] b_recv) {
         String info = "";
-        if(b_recv != null){
+        if (b_recv != null) {
             try {
-                info = new String (b_recv,"UTF-8");
+                info = new String(b_recv, "UTF-8");
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
             return info;
-        }else{
+        } else {
             return "Failed to get printer product information!";
         }
     }
 
     /**
      * 3.45 获取开发包信息
+     *
      * @return String
      */
-    public static String GetSDKinformation()
-    {
+    public static String GetSDKinformation() {
         return "V3.0.0.0";
     }
 
     /**
      * 3.46 设置右边距
-     * @param iRightspace
-     *            [范围] 0 ≤ n ≤ 255
-     *            [描述] 设置字符右侧的间距为n 个水平点距。 在倍宽模式下，字符右侧间距是正常
-     *            值的两倍；当字符被放大时，字符右侧间距被放大同样的倍数。
+     *
+     * @param iRightspace [范围] 0 ≤ n ≤ 255
+     *                    [描述] 设置字符右侧的间距为n 个水平点距。 在倍宽模式下，字符右侧间距是正常
+     *                    值的两倍；当字符被放大时，字符右侧间距被放大同样的倍数。
      */
     public static byte[] SetRightmargin(int iRightspace) {
         byte[] bCmd = new byte[3];
@@ -1326,10 +1376,12 @@ public abstract class PrintCmd {
         bCmd[iIndex++] = (byte) iRightspace;
         return bCmd;
     }
+
     /**
      * 3.47 设置条码对齐方式
+     *
      * @param iAlign 0 左对齐 、1 居中对齐、2 右对齐
-     * 	   描述：打印条形码时，根据iAlign可选值进行条码对齐
+     *               描述：打印条形码时，根据iAlign可选值进行条码对齐
      */
     public static byte[] Set1DBarCodeAlign(int iAlign) {
         byte[] bCmd = new byte[3];
@@ -1350,7 +1402,7 @@ public abstract class PrintCmd {
      *     描述：设置打印机指令模式
      * @param iMode 2 EPIC模式、3 EPOS模式
      */
-    public static byte[] SetCommandmode(int iMode){
+    public static byte[] SetCommandmode(int iMode) {
         return SetCommmandmode(iMode);
     }
 
@@ -1358,13 +1410,13 @@ public abstract class PrintCmd {
      * 4.1 设置旋转打印模式 【----未通过测试----】
      *     描述：设置进入旋转打印模式
      */
-    public static int SetRotation_Intomode(){
+    public static int SetRotation_Intomode() {
         int iRet = 1;
         byte[] bCmd = new byte[2];
-        int iIndex=0;
-        bCmd[iIndex++]=0x13;
-        bCmd[iIndex++]=0x44;
-        if(bCmd != null && bCmd.length > 1)
+        int iIndex = 0;
+        bCmd[iIndex++] = 0x13;
+        bCmd[iIndex++] = 0x44;
+        if (bCmd != null && bCmd.length > 1)
             iRet = 1;
         else
             iRet = 0;
@@ -1375,10 +1427,10 @@ public abstract class PrintCmd {
      * 4.2 打印旋转模式数据
      *    描述：打印进入旋转模式后保存的数据并退出旋转模式并默认EPOS指令模式
      */
-    public static byte[] PrintRotation_Data(){
+    public static byte[] PrintRotation_Data() {
         byte[] bCmd = new byte[1];
-        int iIndex=0;
-        bCmd[iIndex++]=0x0b;
+        int iIndex = 0;
+        bCmd[iIndex++] = 0x0b;
         return bCmd;
     }
 
@@ -1609,10 +1661,10 @@ public abstract class PrintCmd {
      * 4.5 发送旋转模式换行
      *     描述：旋转模式下换行
      */
-    public static byte[] PrintRotation_Changeline(){
+    public static byte[] PrintRotation_Changeline() {
         byte[] bCmd = new byte[1];
         int iIndex = 0;
-        bCmd[iIndex++]=0x0a;
+        bCmd[iIndex++] = 0x0a;
         return bCmd;
     }
 
@@ -1676,12 +1728,12 @@ public abstract class PrintCmd {
 //	}
 
 
-
     /** END================定制类打印接口说明(EP800)============== */
 
 
-
-    /** ========================Start【HexUtils之前用到的函数】========================= */
+    /**
+     * ========================Start【HexUtils之前用到的函数】=========================
+     */
 
 
     private static String getHexResult(String targetStr) {
@@ -1707,26 +1759,25 @@ public abstract class PrintCmd {
     /**=====================JNA=========================**/
     /**
      * JNA字符串转数组
+     *
      * @param strData
      * @param iLen
      * @return
      */
-    public static byte[] JNAStringToByte(String strData,int iLen)
-    {
+    public static byte[] JNAStringToByte(String strData, int iLen) {
         int iIndex = 0;
         byte[] bData1 = new byte[iLen];
         int iValue1 = 0;
         String strValue1 = "";
 
-        for (iIndex = 0; iIndex < iLen; iIndex++)
-        {
-            strValue1 = strData.substring(iIndex*2,iIndex*2+1);
-            iValue1 = Integer.valueOf(strValue1,16);
+        for (iIndex = 0; iIndex < iLen; iIndex++) {
+            strValue1 = strData.substring(iIndex * 2, iIndex * 2 + 1);
+            iValue1 = Integer.valueOf(strValue1, 16);
             iValue1 = iValue1 * 16;
 
-            strValue1 = strData.substring(iIndex*2+1,iIndex*2+2);
-            iValue1 = iValue1 + Integer.valueOf(strValue1,16);
-            bData1[iIndex] = (byte)iValue1;
+            strValue1 = strData.substring(iIndex * 2 + 1, iIndex * 2 + 2);
+            iValue1 = iValue1 + Integer.valueOf(strValue1, 16);
+            bData1[iIndex] = (byte) iValue1;
         }
 
         return bData1;
@@ -1734,88 +1785,79 @@ public abstract class PrintCmd {
 
     /**
      * JNA数组转字符串
+     *
      * @param bData
      * @return
      */
-    public static String JNAByteToString(byte[] bData)
-    {
+    public static String JNAByteToString(byte[] bData) {
         int iIndex = 0;
         int iValue1 = 0;
         int iValue2 = 0;
         String strValue1 = "";
         int iLen = bData.length;
-        for (iIndex = 0; iIndex < iLen; iIndex++)
-        {
-            iValue1 = (bData[iIndex]+256)%256;
-            iValue2 = (iValue1>>4);	//0-15
-            strValue1 = strValue1 + String.format("%x",iValue2);
-            iValue2 = (iValue1%0x10);	//0-15
-            strValue1 = strValue1 + String.format("%x",iValue2);
+        for (iIndex = 0; iIndex < iLen; iIndex++) {
+            iValue1 = (bData[iIndex] + 256) % 256;
+            iValue2 = (iValue1 >> 4);    //0-15
+            strValue1 = strValue1 + String.format("%x", iValue2);
+            iValue2 = (iValue1 % 0x10);    //0-15
+            strValue1 = strValue1 + String.format("%x", iValue2);
         }
         return strValue1.toUpperCase();
     }
 
-    public static String JNAByteToString(byte[] bData,int iIndex ,int iLen)
-    {
+    public static String JNAByteToString(byte[] bData, int iIndex, int iLen) {
         int iValue1 = 0;
         int iValue2 = 0;
         String strValue1 = "";
-        for (iIndex=iIndex; iIndex < iLen; iIndex++)
-        {
-            try
-            {
-                iValue1 = (bData[iIndex]+256)%256;
-                iValue2 = (iValue1>>4);	//0-15
-                strValue1 = strValue1 + String.format("%x",iValue2);
-                iValue2 = (iValue1%0x10);	//0-15
-                strValue1 = strValue1 + String.format("%x",iValue2);
-            }
-            catch(Exception e){
+        for (iIndex = iIndex; iIndex < iLen; iIndex++) {
+            try {
+                iValue1 = (bData[iIndex] + 256) % 256;
+                iValue2 = (iValue1 >> 4);    //0-15
+                strValue1 = strValue1 + String.format("%x", iValue2);
+                iValue2 = (iValue1 % 0x10);    //0-15
+                strValue1 = strValue1 + String.format("%x", iValue2);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         return strValue1.toUpperCase();
     }
 
-    public static byte[] PrintDataMatrix(String strData, int iSize)
-    {
-        try
-        {
-            int iResult = JNAData1.INSTANCE.Data1PrintDataMatrix(strData,iSize);
-            if(iResult > 0) {
+    public static byte[] PrintDataMatrix(String strData, int iSize) {
+        try {
+            int iResult = JNAData1.INSTANCE.Data1PrintDataMatrix(strData, iSize);
+            if (iResult > 0) {
                 String strPrintData = JNAData1.INSTANCE.Data1GetPrintDataA();
-                byte[] bData =JNAStringToByte(strPrintData,iResult);
+                byte[] bData = JNAStringToByte(strPrintData, iResult);
                 JNAData1.INSTANCE.Data1Release();
                 return bData;
             }
 
-        }catch(Exception e)
-        {
+        } catch (Exception e) {
         }
         return null;
     }
 
     /**
      * 3.22 打印QR码
+     *
      * @param strData  内容
      * @param iLmargin 左边距，取值0-27 单位mm
      * @param iMside   单位长度，即QR码大小，取值1-8，（有些打印机型只支持1-4）
      * @param iRound   环绕模式，1 环绕（混排，有些机型不支持）、0立即打印（不混排）
      */
-    public static byte[] PrintQrcode(String strData,int iLmargin,int iMside,int iRound){
+    public static byte[] PrintQrcode(String strData, int iLmargin, int iMside, int iRound) {
 
-        try
-        {
-            int iResult = JNAData1.INSTANCE.Data1PrintQrcode(strData,iLmargin,iMside,iRound);
-            if(iResult > 0) {
+        try {
+            int iResult = JNAData1.INSTANCE.Data1PrintQrcode(strData, iLmargin, iMside, iRound);
+            if (iResult > 0) {
                 String strPrintData = JNAData1.INSTANCE.Data1GetPrintDataA();
-                byte[] bData =JNAStringToByte(strPrintData,iResult);
+                byte[] bData = JNAStringToByte(strPrintData, iResult);
                 JNAData1.INSTANCE.Data1Release();
                 return bData;
             }
 
-        }catch(Exception e)
-        {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
         return null;
@@ -1823,52 +1865,51 @@ public abstract class PrintCmd {
 
     /**
      * 打印磁盘BMP文件，仅支持单色BMP文件
+     *
      * @param strPath 图片路径
      */
 
-    public static  byte[] PrintDiskbmpfile(String strPath){
-        try{
+    public static byte[] PrintDiskbmpfile(String strPath) {
+        try {
             int iResult = JNAData1.INSTANCE.Data1PrintDiskbmpfile(strPath);
-            if(iResult > 0) {
+            if (iResult > 0) {
                 String strPrintData = JNAData1.INSTANCE.Data1GetPrintDataA();
-                byte[] bData =JNAStringToByte(strPrintData,iResult);
+                byte[] bData = JNAStringToByte(strPrintData, iResult);
                 JNAData1.INSTANCE.Data1Release();
                 return bData;
             }
-        }catch(Exception e)
-        {
-            System.out.println(e.getMessage());
-        }
-            return null;
-        }
-
-    /**3.47
-     * @param iNums    位图数量(单个文件最大64K，所有文件最大192K)
-     * @param strPath  图像文件路径（若只有文件名则使用当前路径，
-     * 				      若指定全路径则使用指定的路径），以”;”分隔，个数需和iNums参数一致
-     */
-    public static byte[] SetNvbmp(int iNums, String strPath){
-        try{
-            int iResult = JNAData1.INSTANCE.Data1SetNvbmp(iNums,strPath);
-            if(iResult > 0) {
-                String strPrintData = JNAData1.INSTANCE.Data1GetPrintDataA();
-                byte[] bData =JNAStringToByte(strPrintData,iResult);
-                JNAData1.INSTANCE.Data1Release();
-                return bData;
-            }
-        }catch(Exception e)
-        {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
         return null;
     }
-	
-	//状态值英文解析
-    public static String getStatusDescriptionEn(int iStatus)
-    {
+
+    /**
+     * 3.47
+     *
+     * @param iNums   位图数量(单个文件最大64K，所有文件最大192K)
+     * @param strPath 图像文件路径（若只有文件名则使用当前路径，
+     *                若指定全路径则使用指定的路径），以”;”分隔，个数需和iNums参数一致
+     */
+    public static byte[] SetNvbmp(int iNums, String strPath) {
+        try {
+            int iResult = JNAData1.INSTANCE.Data1SetNvbmp(iNums, strPath);
+            if (iResult > 0) {
+                String strPrintData = JNAData1.INSTANCE.Data1GetPrintDataA();
+                byte[] bData = JNAStringToByte(strPrintData, iResult);
+                JNAData1.INSTANCE.Data1Release();
+                return bData;
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
+    //状态值英文解析
+    public static String getStatusDescriptionEn(int iStatus) {
         String strResult = "";
-        switch (iStatus)
-        {
+        switch (iStatus) {
             case 0:
                 strResult = "Printer is ready";
                 break;
@@ -1898,5 +1939,5 @@ public abstract class PrintCmd {
                 break;
         }
         return strResult;
-    }	
+    }
 }
