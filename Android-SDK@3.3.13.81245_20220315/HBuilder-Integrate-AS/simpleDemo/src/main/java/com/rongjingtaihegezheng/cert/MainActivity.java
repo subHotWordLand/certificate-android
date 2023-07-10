@@ -58,7 +58,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import cpcl.PrinterHelper;
 import rx.functions.Action1;
 
 
@@ -635,7 +634,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         Log.e("rongjingtai", "dataObj is " + dataObj);
         if (!checkClick.isClickEvent()) return;
         try {
-            PrinterHelper.portClose();
+//            PrinterHelper.portClose();
             isConnectPrint = false;
             return;
         } catch (Exception e) {
@@ -822,7 +821,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 if (data == null) return;
                 switch (resultCode) {
                     case RESULT_CANCELED:
-                        connectBT(data.getStringExtra("SelectedBDAddress"));
+//                        connectBT(data.getStringExtra("SelectedBDAddress"));
                         break;
                 }
             } catch (Exception e) {
@@ -856,39 +855,6 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
         byte[] byteArray = byteArrayOutputStream.toByteArray();
         return Base64.encodeToString(byteArray, Base64.DEFAULT);
-    }
-
-    private void connectBT(final String selectedBDAddress) {
-        if (TextUtils.isEmpty(selectedBDAddress)) return;
-        final ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
-        progressDialog.setMessage("连接");
-        progressDialog.show();
-        new Thread() {
-            @Override
-            public void run() {
-                super.run();
-                try {
-                    final int result = PrinterHelper.portOpenBT(getApplicationContext(), selectedBDAddress);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (result == 0) {
-                                Log.d("rongjingtai", "连接成功！");
-                                Toast.makeText(thisCon, "连接成功！", Toast.LENGTH_SHORT).show();
-                                isConnectPrint = true;
-                                printResult();
-                            } else {
-                                Log.d("rongjingtai", "连接失败" + result);
-                                Toast.makeText(thisCon, "连接失败", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-                    progressDialog.dismiss();
-                } catch (Exception e) {
-                    progressDialog.dismiss();
-                }
-            }
-        }.start();
     }
 
     @SuppressLint("MissingPermission")
@@ -933,7 +899,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     bitmap.getPixels(pixels, 0, width, 0, 0, width, heigh);
                     int[] data1 = pixels;
                     ptmUsbDriver.write(PrintCmd.SetLeftmargin(34));
-                    ptmUsbDriver.write(PrintDiskImagefile(data1, width,269));
+                    ptmUsbDriver.write(PrintDiskImagefile(data1, width, 269));
                     ptmUsbDriver.write(PrintCmd.SetRotate(1));
                     ptmUsbDriver.write(PrintCmd.SetDirection(1));
 //                    ptmUsbDriver.write(PrintCmd.PrintFeedline(6));
@@ -965,19 +931,6 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         super.onDestroy();
         //人脸usb监听
         mUsbDevPermission.unRegisterReceiver();
-        //打印机usb监听
-        try {
-            PrinterHelper.portClose();
-            if (ptmUsbReceiver != null) {
-                unregisterReceiver(ptmUsbReceiver);
-            }
-//            if (ptmReceiver != null) {
-//                unregisterReceiver(mReceiver);
-//            }
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 
 }
