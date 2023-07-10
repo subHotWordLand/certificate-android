@@ -59,7 +59,6 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     private Context thisCon = null;
     private BluetoothAdapter mBluetoothAdapter;
     private Handler handler;
-    private PendingIntent mPermissionIntent = null;
     private ProgressDialog dialog;
     public static String paper = "0";
     private ExecutorService executorService;
@@ -625,7 +624,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                                     UsbInterface intf = ptdevice.getInterface(i);
                                     if (intf.getInterfaceClass() == 7) {
                                         HavePrinter = true;
-                                        ptmUsbManager.requestPermission(ptdevice, mPermissionIntent);
+                                        ptmUsbManager.requestPermission(ptdevice, ptmPermissionIntent);
                                     }
                                 }
                             }
