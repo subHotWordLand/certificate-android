@@ -24,8 +24,7 @@ android {
         ]
         ndk {
             // 打包生成的 APK 文件指挥包含 ARM 指令集的动态库
-            abiFilters "armeabi-v7a"
-            /*"arm64-v8a", "x86", "x86_64"*/
+            abiFilters "armeabi-v7a" /*, "x86", "x86_64"*/
         }
     }
     signingConfigs {
@@ -85,6 +84,5 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.0.0'
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.46'
     implementation 'com.tbruyelle.rxpermissions:rxpermissions:0.9.3'
-
 }
 

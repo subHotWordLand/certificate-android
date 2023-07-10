@@ -8,9 +8,8 @@ import android.os.Message;
 import android.util.Base64;
 import android.util.Log;
 
-import org.apache.http.util.EncodingUtils;
-
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -29,14 +28,17 @@ import static android.content.ContentValues.TAG;
 import static com.msprintsdk.PrintCmd.PrintDiskImagefile;
 import static javax.xml.transform.OutputKeys.ENCODING;
 
+import org.apache.http.util.EncodingUtils;
+
 
 public class UtilsTools {
     private static String hexString = "0123456789ABCDEF";
+
     public static Bitmap convertToBlackWhite(Bitmap bmp) {
         System.out.println(bmp.getConfig());
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        if(width>640){
+        if (width > 640) {
             width = 640;
         }
 //        if (height > 2000){
@@ -44,39 +46,39 @@ public class UtilsTools {
 //        }
         int[] pixels = new int[width * height];
         bmp.getPixels(pixels, 0, width, 0, 0, width, height);
-        int[] gray=new int[height*width];
-        try{
+        int[] gray = new int[height * width];
+        try {
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
                     int grey = pixels[width * i + j];
-                    int red = ((grey & 0x00FF0000 ) >>16);
-                    gray[width*i+j]=red;
+                    int red = ((grey & 0x00FF0000) >> 16);
+                    gray[width * i + j] = red;
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             Log.e(TAG, "PrintBmp:" + e.getMessage());
         }
 
-        int e=0;
+        int e = 0;
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
-                int g=gray[width*i+j];
-                if (g>=128) {
-                    pixels[width*i+j]=0xffffffff;
-                    e=g-255;
+                int g = gray[width * i + j];
+                if (g >= 128) {
+                    pixels[width * i + j] = 0xffffffff;
+                    e = g - 255;
 
-                }else {
-                    pixels[width*i+j]=0xff000000;
-                    e=g-0;
+                } else {
+                    pixels[width * i + j] = 0xff000000;
+                    e = g - 0;
                 }
-                if (j<width-1&&i<height-1) {
-                    gray[width*i+j+1]+=3*e/8;
-                    gray[width*(i+1)+j]+=3*e/8;
-                    gray[width*(i+1)+j+1]+=e/4;
-                }else if (j==width-1&&i<height-1) {
-                    gray[width*(i+1)+j]+=3*e/8;
-                }else if (j<width-1&&i==height-1) {
-                    gray[width*(i)+j+1]+=e/4;
+                if (j < width - 1 && i < height - 1) {
+                    gray[width * i + j + 1] += 3 * e / 8;
+                    gray[width * (i + 1) + j] += 3 * e / 8;
+                    gray[width * (i + 1) + j + 1] += e / 4;
+                } else if (j == width - 1 && i < height - 1) {
+                    gray[width * (i + 1) + j] += 3 * e / 8;
+                } else if (j < width - 1 && i == height - 1) {
+                    gray[width * (i) + j + 1] += e / 4;
                 }
             }
 
@@ -91,7 +93,7 @@ public class UtilsTools {
     }
 
 
-    public static int saveBmpFile(Bitmap bitmap,String strFileName) {
+    public static int saveBmpFile(Bitmap bitmap, String strFileName) {
         //String filename = "/storage/emulated/0/Music/test.bmp";
         int iResult = -1;
         if (bitmap == null)
@@ -183,21 +185,21 @@ public class UtilsTools {
         stream.write(b);
     }
 
-    public static String readTxt(String path){
+    public static String readTxt(String path) {
         String str = "";
         try {
             File urlFile = new File(path);
             InputStreamReader isr = new InputStreamReader(new FileInputStream(urlFile), "UTF-8");
             BufferedReader br = new BufferedReader(isr);
 
-            String mimeTypeLine = null ;
+            String mimeTypeLine = null;
             while ((mimeTypeLine = br.readLine()) != null) {
-                str = str+mimeTypeLine;
+                str = str + mimeTypeLine;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return  str;
+        return str;
     }
 
     public static String encodeCN(String data) {
@@ -258,6 +260,7 @@ public class UtilsTools {
 
     /**
      * 字符串转含0x 16进制
+     *
      * @param paramString
      * @return
      */
@@ -277,12 +280,10 @@ public class UtilsTools {
     /// <param name="src">源byte数组</param>
     /// <param name="offset">起始位置</param>
     /// <returns></returns>
-    public static int[] bytesToInt(byte[] src, int offset)
-    {
-        int[] values=new int[src.length/4];
-        for (int i = 0; i < src.length / 4; i++)
-        {
-            int value = (int)((src[offset] & 0xFF)
+    public static int[] bytesToInt(byte[] src, int offset) {
+        int[] values = new int[src.length / 4];
+        for (int i = 0; i < src.length / 4; i++) {
+            int value = (int) ((src[offset] & 0xFF)
                     | ((src[offset + 1] & 0xFF) << 8)
                     | ((src[offset + 2] & 0xFF) << 16)
                     | ((src[offset + 3] & 0xFF) << 24));
@@ -294,14 +295,15 @@ public class UtilsTools {
 
     /**
      * 字节数组转16进制
+     *
      * @param bytes 需要转换的byte数组
-     * @return  转换后的Hex字符串
+     * @return 转换后的Hex字符串
      */
     public static String bytesToHex(byte[] bytes) {
         StringBuffer sb = new StringBuffer();
-        for(int i = 0; i < bytes.length; i++) {
+        for (int i = 0; i < bytes.length; i++) {
             String hex = Integer.toHexString(bytes[i] & 0xFF);
-            if(hex.length() < 2){
+            if (hex.length() < 2) {
                 sb.append(0);
             }
             sb.append(hex);
@@ -309,17 +311,15 @@ public class UtilsTools {
         return sb.toString();
     }
 
-    public static String  unicodeToUtf8 (String s) {
-        Log.e("TAG",getEncoding(s));
+    public static String unicodeToUtf8(String s) {
+        Log.e("TAG", getEncoding(s));
         try {
-            if(getEncoding(s) == "UTF-8"){
-                return new String( s.getBytes("GBK") , "UTF-8");
-            }else
-            if(getEncoding(s) == "GBK"||getEncoding(s) == "GB2312"){
-                return new String( s.getBytes("GBK") , "GBK");
-            }else
-            if(getEncoding(s) == "ISO-8859-1"){
-                return new String( s.getBytes("ISO-8859-1") , "UTF-8");
+            if (getEncoding(s) == "UTF-8") {
+                return new String(s.getBytes("GBK"), "UTF-8");
+            } else if (getEncoding(s) == "GBK" || getEncoding(s) == "GB2312") {
+                return new String(s.getBytes("GBK"), "GBK");
+            } else if (getEncoding(s) == "ISO-8859-1") {
+                return new String(s.getBytes("ISO-8859-1"), "UTF-8");
             }
 
         } catch (UnsupportedEncodingException e) {
@@ -365,23 +365,22 @@ public class UtilsTools {
     }
 
 
-
-
     /**
      * 截取byte[]
-     * @param data 被截取数组
-     * @param start 起始位置
+     *
+     * @param data   被截取数组
+     * @param start  起始位置
      * @param length 截取长度
      * @return
      */
     public static byte[] byteSub(byte[] data, int start, int length) {
         byte[] bt = new byte[length];
 
-        if(start + length > data.length) {
-            bt = new byte[data.length-start];
+        if (start + length > data.length) {
+            bt = new byte[data.length - start];
         }
 
-        for(int i = 0; i < length &&(i + start) < data.length; i++) {
+        for (int i = 0; i < length && (i + start) < data.length; i++) {
             bt[i] = data[i + start];
         }
         return bt;
@@ -389,6 +388,7 @@ public class UtilsTools {
 
     /**
      * 判断字符串内是不是16进制的值
+     *
      * @param str
      * @return
      */
@@ -396,7 +396,6 @@ public class UtilsTools {
         String pattern = "^[0-9A-F]+$";
         return Pattern.compile(pattern).matcher(str).matches();
     }
-
 
 
     // -------------------------------------------------------
@@ -424,6 +423,7 @@ public class UtilsTools {
     {
         return (byte) Integer.parseInt(inHex, 16);
     }
+
     // 判断奇数或偶数，位运算，最后一位是1则为奇数，为0是偶数
     static public int isOdd(int num) {
         return num & 0x1;
@@ -431,7 +431,7 @@ public class UtilsTools {
 
 
     public static byte[] PrintBase64(String file) {
-        int imgWidth ,imgHeigh;
+        int imgWidth, imgHeigh;
         String base64Data = readTxt(file).trim();
         Bitmap bitmap = null;
         try {
@@ -447,7 +447,7 @@ public class UtilsTools {
         int[] pixels = new int[iDataLen];
         bitmap.getPixels(pixels, 0, imgWidth, 0, 0, imgWidth, imgHeigh);
         int[] data1 = pixels;
-        byte base64 [] =  PrintDiskImagefile(data1, imgWidth, imgHeigh);
+        byte base64[] = PrintDiskImagefile(data1, imgWidth, imgHeigh);
 
 //        mUsbDriver.write(PrintCmd.PrintFeedline(10));
 //        mUsbDriver.write(PrintCmd.PrintCutpaper(0));
@@ -457,7 +457,7 @@ public class UtilsTools {
     }
 
     public static int[] getBitmapParamsData(String imgPath) {
-        int imgWidth ,imgHeigh;
+        int imgWidth, imgHeigh;
         FileInputStream file = null;
         try {
             file = new FileInputStream(imgPath);
@@ -469,15 +469,16 @@ public class UtilsTools {
         if (!imgPath.substring(imgPath.indexOf(".") + 1).equals("bmp")) {
             bitmap = convertToBlackWhite(bitmap);
         }
-            imgWidth = bitmap.getWidth();
-            imgHeigh = bitmap.getHeight();
-            int iDataLen = imgWidth * imgHeigh;
-            int[] pixels = new int[iDataLen];
-            bitmap.getPixels(pixels, 0, imgWidth, 0, 0, imgWidth, imgHeigh);
-            return pixels;
-        }
+        imgWidth = bitmap.getWidth();
+        imgHeigh = bitmap.getHeight();
+        int iDataLen = imgWidth * imgHeigh;
+        int[] pixels = new int[iDataLen];
+        bitmap.getPixels(pixels, 0, imgWidth, 0, 0, imgWidth, imgHeigh);
+        return pixels;
+    }
 
 //    -----------------------------------------------------------------------------------
+
     /**
      * 将字符串形式表示的十六进制数转换为byte数组
      */
@@ -508,24 +509,24 @@ public class UtilsTools {
         }
         return strBuilder.toString();
     }
+
     // -------------------------------------------------------
     static public String Byte2Hex(Byte inByte)// 1字节转2个Hex字符
     {
         return String.format("%02x", inByte).toUpperCase();
     }
- 
+
     //打开txt文件获取内容
-    public static String ReadTxtFile(String strFilePath){
+    public static String ReadTxtFile(String strFilePath) {
         String path = strFilePath;
         String str = "";
-        List<String> newList=new ArrayList<String>();
+        List<String> newList = new ArrayList<String>();
         //打开文件
         File file = new File(path);
         //如果path是传递过来的参数，可以做一个非目录的判断
-        if (file.isDirectory()){
+        if (file.isDirectory()) {
             Log.d("TestFile", "The File doesn't not exist.");
-        }
-        else{
+        } else {
             try {
                 // 获取文件
                 FileInputStream fin = new FileInputStream(strFilePath);
@@ -551,6 +552,7 @@ public class UtilsTools {
 
     /**
      * // 获得编码格式
+     *
      * @param head
      * @return
      */
@@ -558,44 +560,49 @@ public class UtilsTools {
         String type = "";
         byte[] codehead = new byte[3];
         System.arraycopy(head, 0, codehead, 0, 3);
-        if(codehead[0] == -1 && codehead[1] == -2) {
+        if (codehead[0] == -1 && codehead[1] == -2) {
             type = "UTF-16";
-        }
-        else if(codehead[0] == -2 && codehead[1] == -1) {
+        } else if (codehead[0] == -2 && codehead[1] == -1) {
             type = "UNICODE";
-        }
-        else if(codehead[0] == -17 && codehead[1] == -69 && codehead[2] == -65) {
+        } else if (codehead[0] == -17 && codehead[1] == -69 && codehead[2] == -65) {
             type = "UTF-8";
-        }
-        else {
+        } else {
             type = "GB2312";
         }
         return type;
     }
 
     //从resources中的raw 文件夹中获取文件并读取数据
-    public static String getFromRaw(InputStream in){
+    public static String getFromRaw(InputStream in) {
         String result = "";
+        InputStreamReader inputReader = null;
         try {
-            //获取文件的字节数
-            int lenght = in.available();
-            //创建byte数组
-            byte[]  buffer = new byte[lenght];
-            //将文件中的数据读到byte数组中
-            in.read(buffer);
-            result = EncodingUtils.getString(buffer, ENCODING);
-        } catch (Exception e) {
-            e.printStackTrace();
+            inputReader = new InputStreamReader(in, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
         }
-        return result;
+        BufferedReader bufReader = new BufferedReader(inputReader);
+        String line = "";
+        String Result = "";
+        while (true) {
+            try {
+                if (!((line = bufReader.readLine()) != null)) break;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            Result += line;
+        }
+        return Result;
+
     }
 
 
     /**
      * 获取当前时间
+     *
      * @return
      */
-    public static String data(){
+    public static String data() {
         Date date = new Date();
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss ");
