@@ -14,6 +14,7 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
@@ -51,6 +52,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,7 +69,6 @@ import rx.functions.Action1;
 public class MainActivity extends CheckPermissionsActivity implements PermissionUtils.FullCallback {
     private Context thisCon = null;
     private BluetoothAdapter mBluetoothAdapter;
-    private Handler handler;
     private ProgressDialog dialog;
     public static String paper = "0";
     private ExecutorService executorService;
@@ -85,6 +86,8 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     private PendingIntent ptmPermissionIntent = null;
     private int ptnum = 0;//打印次数
     public AlertDialog ptalertDialog;
+    private PrintCountHandler pthandler = new PrintCountHandler(this);
+    private PrintCountRunnable ptrunnable = new PrintCountRunnable(this);
 
     private static final String ACTION_USB_PERMISSION = "com.HPRTSDKSample";
 
@@ -129,6 +132,34 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         filter.addAction(ACTION_USB_PERMISSION);
         this.registerReceiver(ptmUsbReceiver, filter);
+
+        ptalertDialog = new AlertDialog.Builder(MainActivity.this)
+                .setTitle("连续打印")//标题
+                .setNeutralButton("停止", new DialogInterface.OnClickListener() {//添加普通按钮
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        ptnum = 0;
+                        pthandler.removeCallbacks(ptrunnable);
+                        /*
+                        dataBean.m_iFunID = 6;
+                        m_printerQueueList.add(dataBean);
+                        mbtn_receiptPrint.setEnabled(true);
+                        mbtn_getStatus.setEnabled(true);
+                        mbtn_imgPrint.setEnabled(true);
+                        mbtn_CyclesPrint.setEnabled(true);
+                        mbtn_findFile.setEnabled(true);
+                        check_hex.setEnabled(true);
+                        mbtn_printContent.setEnabled(true);
+                        Button button = alertDialog1.getButton(AlertDialog.BUTTON_NEUTRAL);
+                        if(null==button){
+                            Log.i("carter", "button is null");
+                        }else{
+                            button.setText("Stop");
+                        }
+                         */
+                    }
+                }).create();
+        ptalertDialog.setCanceledOnTouchOutside(false);
         //打印机 end
 
         //idcard start
@@ -538,6 +569,40 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         }
     };
 
+
+    // 打印次数handler对象
+    static class PrintCountHandler extends Handler {
+        WeakReference<Activity> mWeakReference;
+
+        public PrintCountHandler(Activity activity) {
+            mWeakReference = new WeakReference<Activity>(activity);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            final Activity activity = mWeakReference.get();
+            // 处理从子线程发送过来的消息
+            int arg1 = msg.arg1;  //获取消息携带的属性值
+            int arg2 = msg.arg2;
+            int what = msg.what;
+            Object result = msg.obj;
+            /*
+            switch(what)
+            {
+                case 0:
+                    break;
+                case 3:
+                case 4:
+                    ShowMessage(result.toString());
+                    break;
+                default:
+                    break;
+            }
+             */
+        }
+    }
+
+
     private void initCmdList() {
         chmodCmdString.add("chmod 777 /dev/;");
         chmodCmdString.add("chmod 777 /dev/bus/;");
@@ -676,7 +741,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                                 showMessage("打印机没有授权认证!", 1);
                                 return;
                             }
-                            printResult();
+                            printAction();
                         }
                     });
                 } catch (Exception e) {
@@ -899,7 +964,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 if (iValue != 0) {
                     strValue = PrintCmd.getStatusDescriptionEn(iValue);
                     message.obj = strValue;
-                    handler.sendMessage(message);
+                    pthandler.sendMessage(message);
                 }
             }
 
@@ -910,7 +975,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     if (iValue != 0) {
                         strValue = PrintCmd.getStatusDescriptionEn(iValue);
                         message.obj = strValue;
-                        handler.sendMessage(message);
+                        pthandler.sendMessage(message);
                     }
                 }
             }
@@ -922,7 +987,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     if (iValue != 0) {
                         strValue = PrintCmd.getStatusDescriptionEn(iValue);
                         message.obj = strValue;
-                        handler.sendMessage(message);
+                        pthandler.sendMessage(message);
                     }
                 }
             }
@@ -933,38 +998,56 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     if (iValue != 0) {
                         strValue = PrintCmd.getStatusDescriptionEn(iValue);
                         message.obj = strValue;
-                        handler.sendMessage(message);
+                        pthandler.sendMessage(message);
                     }
                 }
             }
             if (iValue == 0) {
                 strValue = PrintCmd.getStatusDescriptionEn(iValue);
                 message.obj = strValue;
-                handler.sendMessage(message);
+                pthandler.sendMessage(message);
             }
             iResult = iValue;
         } catch (Exception e) {
             Message message = Message.obtain();
             message.what = 4;
             message.obj = e.getMessage();
-            handler.sendMessage(message);
+            pthandler.sendMessage(message);
 
             Log.e(TAG, "PrintStatus:" + e.getMessage());
         }
         return iResult;
     }
 
-    Runnable runnable = new Runnable() {
+    private static class PrintCountRunnable implements Runnable {
+        WeakReference<MainActivity> reference;
+
+        public PrintCountRunnable(MainActivity activity) {
+            reference = new WeakReference<>(activity);
+        }
+
         @Override
         public void run() {
+            MainActivity activity = reference.get();
             int iStatus = -1;
-            iStatus = PrintStatus();
+            iStatus = activity.PrintStatus();
             // TODO Auto-generated method stub
             // 要做的事情，这里再次调用此Runnable对象，以实现每两秒实现一次的定时器操作
-            handler.postDelayed(this, 2000);
-//            int iCount = Integer.valueOf(m_edtTextCycles.getText().toString());
-            int iCount = 2;
-            printResult();
+            activity.pthandler.postDelayed(this, 2000);
+            if (activity.prtInfo == null) {
+                activity.showMessage("prtInfo 为空", 1);
+                return;
+            }
+            activity.showMessage("PrintCountRunnable 运行", 1);
+            String printCount = null;
+            try {
+                printCount = activity.prtInfo.getString("printCount");
+            } catch (JSONException e) {
+                activity.showMessage("printCount解析出错", 1);
+                e.printStackTrace();
+            }
+            int iCount = Integer.parseInt(printCount);
+            activity.printResult();
             String Status = "";
             if (iStatus == 0) {
                 Status = "";
@@ -973,31 +1056,38 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
             } else {
                 Status = "     Status:" + PrintCmd.getStatusDescriptionEn(iStatus);
             }
-            String msg = iCount + " copies need to be printed and  " + (++ptnum) + " copies has been printed" + '\n';
-            ptalertDialog.setMessage(msg + Status);
-            ptalertDialog.show();
+            String msg = iCount + " copies need to be printed and  " + (++activity.ptnum) + " copies has been printed" + '\n';
+            activity.ptalertDialog.setMessage(msg + Status);
+            activity.ptalertDialog.show();
             Message message = Message.obtain();
             message.what = 4;
             message.obj = msg;
-            handler.sendMessage(message);
-            if (ptnum >= iCount || iStatus != 0) {
-                Button button = ptalertDialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+            activity.pthandler.sendMessage(message);
+            if (activity.ptnum >= iCount || iStatus != 0) {
+                Button button = activity.ptalertDialog.getButton(AlertDialog.BUTTON_NEUTRAL);
                 if (null == button) {
                     Log.i("carter", "button is null");
                 } else {
                     button.setText("Ok");
                 }
-                ptnum = 0;
-                handler.removeCallbacks(runnable);
+                activity.ptnum = 0;
+                activity.pthandler.removeCallbacks(activity.ptrunnable);
             }
         }
-    };
+    }
 
     private void printAction() {
         if (prtInfo != null) {
             try {
                 String printCount = prtInfo.getString("printCount");
+                int count = Integer.parseInt(printCount);
+                if (count > 1) {
+                    pthandler.postDelayed(ptrunnable, 2000);
+                } else {
+                    printResult();
+                }
             } catch (JSONException e) {
+                showMessage("printAction 发送异常" + e.getMessage(), 1);
                 e.printStackTrace();
             }
         }
@@ -1030,6 +1120,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     ptmUsbDriver.write(PrintCmd.PrintMarkpositioncut());
                     ptmUsbDriver.write(PrintCmd.PrintCutpaper(0));
                 } catch (Exception e) {
+                    showMessage("printResult 异常" + e.getMessage(), 1);
                     e.printStackTrace();
                 }
             } catch (Exception e) {
@@ -1055,6 +1146,8 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         super.onDestroy();
         //人脸usb监听
         mUsbDevPermission.unRegisterReceiver();
+        ptnum = 0;
+        pthandler.removeCallbacks(ptrunnable);
     }
 
 }
