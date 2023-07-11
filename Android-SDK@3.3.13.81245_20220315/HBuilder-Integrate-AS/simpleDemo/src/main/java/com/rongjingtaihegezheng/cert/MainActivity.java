@@ -1,5 +1,6 @@
 package com.rongjingtaihegezheng.cert;
 
+import static android.content.ContentValues.TAG;
 import static com.msprintsdk.PrintCmd.PrintDiskImagefile;
 import static com.msprintsdk.UtilsTools.convertToBlackWhite;
 import static com.msprintsdk.UtilsTools.getFromRaw;
@@ -7,6 +8,7 @@ import static com.msprintsdk.UtilsTools.getFromRaw;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -27,6 +29,7 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.aiwinn.base.util.PermissionUtils;
@@ -81,6 +84,8 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     private UsbDevice ptmUsbDevice = null;
     private PendingIntent ptmPermissionIntent = null;
     private int ptnum = 0;//打印次数
+    public AlertDialog ptalertDialog;
+
     private static final String ACTION_USB_PERMISSION = "com.HPRTSDKSample";
 
     // 身份证start
@@ -881,9 +886,120 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         return bRet;
     }
 
+    private int PrintStatus() {
+        int iResult = 1;
+        try {
+            int iValue = -1;
+            byte[] bRead1 = new byte[1];
+            String strValue = "";
+            Message message = Message.obtain();
+            message.what = 4;
+            if (ptmUsbDriver.read(bRead1, PrintCmd.GetStatus1()) > 0) {
+                iValue = PrintCmd.CheckStatus1(bRead1[0]);
+                if (iValue != 0) {
+                    strValue = PrintCmd.getStatusDescriptionEn(iValue);
+                    message.obj = strValue;
+                    handler.sendMessage(message);
+                }
+            }
+
+            if (iValue == 0) {
+                iValue = -1;
+                if (ptmUsbDriver.read(bRead1, PrintCmd.GetStatus2()) > 0) {
+                    iValue = PrintCmd.CheckStatus2(bRead1[0]);
+                    if (iValue != 0) {
+                        strValue = PrintCmd.getStatusDescriptionEn(iValue);
+                        message.obj = strValue;
+                        handler.sendMessage(message);
+                    }
+                }
+            }
+
+            if (iValue == 0) {
+                iValue = -1;
+                if (ptmUsbDriver.read(bRead1, PrintCmd.GetStatus3()) > 0) {
+                    iValue = PrintCmd.CheckStatus3(bRead1[0]);
+                    if (iValue != 0) {
+                        strValue = PrintCmd.getStatusDescriptionEn(iValue);
+                        message.obj = strValue;
+                        handler.sendMessage(message);
+                    }
+                }
+            }
+            if (iValue == 0) {
+                iValue = -1;
+                if (ptmUsbDriver.read(bRead1, PrintCmd.GetStatus4()) > 0) {
+                    iValue = PrintCmd.CheckStatus4(bRead1[0]);
+                    if (iValue != 0) {
+                        strValue = PrintCmd.getStatusDescriptionEn(iValue);
+                        message.obj = strValue;
+                        handler.sendMessage(message);
+                    }
+                }
+            }
+            if (iValue == 0) {
+                strValue = PrintCmd.getStatusDescriptionEn(iValue);
+                message.obj = strValue;
+                handler.sendMessage(message);
+            }
+            iResult = iValue;
+        } catch (Exception e) {
+            Message message = Message.obtain();
+            message.what = 4;
+            message.obj = e.getMessage();
+            handler.sendMessage(message);
+
+            Log.e(TAG, "PrintStatus:" + e.getMessage());
+        }
+        return iResult;
+    }
+
+    Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            int iStatus = -1;
+            iStatus = PrintStatus();
+            // TODO Auto-generated method stub
+            // 要做的事情，这里再次调用此Runnable对象，以实现每两秒实现一次的定时器操作
+            handler.postDelayed(this, 2000);
+//            int iCount = Integer.valueOf(m_edtTextCycles.getText().toString());
+            int iCount = 2;
+            printResult();
+            String Status = "";
+            if (iStatus == 0) {
+                Status = "";
+            } else if (iStatus == -1) {
+                Status = "     Status: Printer is offline or no power";
+            } else {
+                Status = "     Status:" + PrintCmd.getStatusDescriptionEn(iStatus);
+            }
+            String msg = iCount + " copies need to be printed and  " + (++ptnum) + " copies has been printed" + '\n';
+            ptalertDialog.setMessage(msg + Status);
+            ptalertDialog.show();
+            Message message = Message.obtain();
+            message.what = 4;
+            message.obj = msg;
+            handler.sendMessage(message);
+            if (ptnum >= iCount || iStatus != 0) {
+                Button button = ptalertDialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+                if (null == button) {
+                    Log.i("carter", "button is null");
+                } else {
+                    button.setText("Ok");
+                }
+                ptnum = 0;
+                handler.removeCallbacks(runnable);
+            }
+        }
+    };
+
     private void printAction() {
         if (prtInfo != null) {
-            
+            try {
+                String printCount = prtInfo.getString("printCount");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
