@@ -1119,7 +1119,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     byte[] bytes = Base64.decode(base64Data.split(",")[1], Base64.DEFAULT);
                     bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     bitmap = convertToBlackWhite(bitmap);
-                    if (facei == 1) {
+                    if (facei == 0) {
                         //反面
                         bitmap = rotateBitmap(bitmap, 180);
                     }
@@ -1129,10 +1129,9 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     int[] pixels = new int[iDataLen];
                     bitmap.getPixels(pixels, 0, width, 0, 0, width, heigh);
                     int[] data1 = pixels;
-                    ptmUsbDriver.write(PrintCmd.SetLeftmargin(34));
+                    int leftSpace = facei == 0 ? 14 : 34;
+                    ptmUsbDriver.write(PrintCmd.SetLeftmargin(leftSpace));
                     ptmUsbDriver.write(PrintDiskImagefile(data1, width, 269));
-                    ptmUsbDriver.write(PrintCmd.SetRotate(1));
-                    ptmUsbDriver.write(PrintCmd.SetDirection(1));
 //                    ptmUsbDriver.write(PrintCmd.PrintFeedline(6));
                     ptmUsbDriver.write(PrintCmd.PrintMarkpositioncut());
                     ptmUsbDriver.write(PrintCmd.PrintCutpaper(0));
