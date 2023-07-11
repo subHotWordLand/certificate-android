@@ -80,6 +80,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     static UsbDriver ptmUsbDriver;
     private UsbDevice ptmUsbDevice = null;
     private PendingIntent ptmPermissionIntent = null;
+    private int ptnum = 0;//打印次数
     private static final String ACTION_USB_PERMISSION = "com.HPRTSDKSample";
 
     // 身份证start
@@ -878,6 +879,12 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
             Log.d("rongjingtai", (new StringBuilder("Activity_Main --> EnableBluetooth ").append("Bluetooth Adapter is null.")).toString());
         }
         return bRet;
+    }
+
+    private void printAction() {
+        if (prtInfo != null) {
+            
+        }
     }
 
     private void printResult() {
