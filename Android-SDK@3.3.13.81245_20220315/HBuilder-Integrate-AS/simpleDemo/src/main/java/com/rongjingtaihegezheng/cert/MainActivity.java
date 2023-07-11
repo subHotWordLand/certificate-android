@@ -163,6 +163,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         //idcard end
 //        EnableBluetooth();
         // 开启子线程
+        /*
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -184,7 +185,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 });
             }
         }).start();
-
+         */
     }
 
     /**
