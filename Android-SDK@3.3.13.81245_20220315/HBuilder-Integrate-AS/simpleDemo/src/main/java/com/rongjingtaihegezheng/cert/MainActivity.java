@@ -1057,7 +1057,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
             }
             String msg = iCount + " copies need to be printed and  " + (++activity.ptnum) + " copies has been printed" + '\n';
             activity.ptalertDialog.setMessage(msg + Status);
-            activity.ptalertDialog.show();
+//            activity.ptalertDialog.show();
             Message message = Message.obtain();
             message.what = 4;
             message.obj = msg;
