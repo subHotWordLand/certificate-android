@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbInterface;
@@ -231,7 +232,6 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     public int usbDriverCheck() {
         int iResult = -1;
         try {
-
             if (!ptmUsbDriver.isUsbPermission()) {
                 UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
                 HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
@@ -261,7 +261,6 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 }
             }
         } catch (Exception e) {
-
             Log.e(TAG, "usbDriverCheck:" + e.getMessage());
         }
 
@@ -1072,6 +1071,12 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 }
                 activity.ptnum = 0;
                 activity.pthandler.removeCallbacks(activity.ptrunnable);
+                //通知uniapp
+                HashMap<String, Object> info = new HashMap<String, Object>();
+                info.put("method", "print");
+                JSONObject r = new JSONObject(info);
+                String rstr = r.toString();
+                if (activity.printCallback != null) activity.printCallback.result(1, rstr);
             }
         }
     }
@@ -1085,6 +1090,12 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     pthandler.postDelayed(ptrunnable, 2000);
                 } else {
                     printResult();
+                    //通知uniapp
+                    HashMap<String, Object> info = new HashMap<String, Object>();
+                    info.put("method", "print");
+                    JSONObject r = new JSONObject(info);
+                    String rstr = r.toString();
+                    if (printCallback != null) printCallback.result(1, rstr);
                 }
             } catch (JSONException e) {
                 showMessage("printAction 发送异常" + e.getMessage(), 1);
@@ -1099,6 +1110,8 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         if (prtInfo != null) {
             try {
                 String base64Data = prtInfo.getString("imgUrl");
+                String face = prtInfo.getString("face");
+                int facei = Integer.parseInt(face);
                 ptmUsbDriver.write(PrintCmd.tuizhi(70));
                 Bitmap bitmap = null;
                 try {
@@ -1106,7 +1119,10 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     byte[] bytes = Base64.decode(base64Data.split(",")[1], Base64.DEFAULT);
                     bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     bitmap = convertToBlackWhite(bitmap);
-
+                    if (facei == 1) {
+                        //反面
+                        bitmap = rotateBitmap(bitmap, 180);
+                    }
                     width = bitmap.getWidth();
                     heigh = bitmap.getHeight();
                     int iDataLen = width * heigh;
@@ -1129,6 +1145,21 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 Log.e("rongjingtai", (new StringBuilder("Activity_Main --> printResult ")).append(e.getMessage()).toString());
             }
         }
+    }
+
+    public static Bitmap rotateBitmap(Bitmap bitmap, int degress) {
+        if (bitmap != null) {
+
+            Matrix m = new Matrix();
+
+            m.postRotate(degress);
+
+            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m,
+
+                    true);
+            return bitmap;
+        }
+        return bitmap;
     }
 
     //人脸权限通知
