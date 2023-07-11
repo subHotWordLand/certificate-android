@@ -1090,6 +1090,8 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 showMessage("printAction 发送异常" + e.getMessage(), 1);
                 e.printStackTrace();
             }
+        } else {
+            showMessage("传递信息不能为空", 1);
         }
     }
 
