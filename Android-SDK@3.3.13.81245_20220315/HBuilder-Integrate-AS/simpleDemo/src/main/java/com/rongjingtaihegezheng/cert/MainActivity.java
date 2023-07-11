@@ -1098,12 +1098,11 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     private void printResult() {
         if (prtInfo != null) {
             try {
+                String base64Data = prtInfo.getString("imgUrl");
                 ptmUsbDriver.write(PrintCmd.tuizhi(70));
                 Bitmap bitmap = null;
                 try {
                     int width, heigh;
-                    InputStream txt = getResources().openRawResource(R.raw.txt);
-                    String base64Data = getFromRaw(txt);
                     byte[] bytes = Base64.decode(base64Data.split(",")[1], Base64.DEFAULT);
                     bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     bitmap = convertToBlackWhite(bitmap);
