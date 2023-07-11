@@ -76,7 +76,6 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     private static String[] PERMISSIONS_STORAGE = {"android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE"};
     private static String[] wifi_PERMISSIONS = {"android.permission.CHANGE_WIFI_STATE", "android.permission.ACCESS_WIFI_STATE"};
     private JSONObject prtInfo;
-    private String prtImgStr;
     private Callback printCallback;
     private Callback idcardCallback;
     private Callback faceCallback;
@@ -717,14 +716,12 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     /**
      * 启动usb打印for js call
      */
-    public void startUsbPrintFromJs(String data, String imgStr, Callback callback) throws JSONException {
+    public void startUsbPrintFromJs(String data, Callback callback) throws JSONException {
         JSONObject result = new JSONObject(data);
         String method = result.getString("method");
         JSONObject dataObj = result.getJSONObject("data");
         prtInfo = dataObj;
-        prtImgStr = imgStr;
-        Log.e("rongjingtai", "usb print imgStr is " + dataObj);
-        Log.e("rongjingtai", "usb print dataObj is " + dataObj);
+        Log.e("rongjingtai", "dataObj is " + dataObj);
         new Thread() {
             @Override
             public void run() {
@@ -1112,11 +1109,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
     private void printResult() {
         if (prtInfo != null) {
             try {
-                if (prtImgStr == null) {
-                    showMessage("imgStr 不能为空", 1);
-                    return;
-                }
-                String base64Data = prtImgStr;
+                String base64Data = prtInfo.getString("imgUrl");
                 String face = prtInfo.getString("face");
                 int facei = Integer.parseInt(face);
                 ptmUsbDriver.write(PrintCmd.tuizhi(70));
