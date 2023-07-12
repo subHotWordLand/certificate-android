@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.hardware.usb.UsbDevice;
@@ -43,6 +44,7 @@ import com.msprintsdk.UsbDriver;
 import com.mtreader.MTReaderEngine;
 import com.rongjingtaihegezheng.cert.common.AttConstants;
 import com.rongjingtaihegezheng.cert.common.AttParams;
+import com.rongjingtaihegezheng.cert.utils.BitmapUtils;
 import com.rongjingtaihegezheng.cert.utils.TTSUtils;
 import com.tbruyelle.rxpermissions.RxPermissions;
 
@@ -1119,12 +1121,19 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     byte[] bytes = Base64.decode(base64Data.split(",")[1], Base64.DEFAULT);
                     bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     bitmap = convertToBlackWhite(bitmap);
-                    if (facei == 0) {
-                        //反面
-                        bitmap = rotateBitmap(bitmap, 180);
-                    }
                     width = bitmap.getWidth();
                     heigh = bitmap.getHeight();
+                    if (facei == 0) {
+                        int cropv = 50;
+                        Bitmap cbp = BitmapUtils.cropBitmapTop(bitmap, heigh - cropv);
+                        //生成白色图片 高度为裁减的高度
+                        Bitmap emptyBp = Bitmap.createBitmap(width, cropv, Bitmap.Config.ARGB_8888);
+                        emptyBp.eraseColor(Color.parseColor("#000000"));
+                        //拼接空白到顶部
+                        bitmap = BitmapUtils.addBitmap(emptyBp, cbp);
+                        //反面
+                        bitmap = BitmapUtils.rotateBitmap(bitmap, 180);
+                    }
                     int iDataLen = width * heigh;
                     int[] pixels = new int[iDataLen];
                     bitmap.getPixels(pixels, 0, width, 0, 0, width, heigh);
@@ -1146,21 +1155,6 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                 Log.e("rongjingtai", (new StringBuilder("Activity_Main --> printResult ")).append(e.getMessage()).toString());
             }
         }
-    }
-
-    public static Bitmap rotateBitmap(Bitmap bitmap, int degress) {
-        if (bitmap != null) {
-
-            Matrix m = new Matrix();
-
-            m.postRotate(degress);
-
-            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m,
-
-                    true);
-            return bitmap;
-        }
-        return bitmap;
     }
 
     //人脸权限通知
