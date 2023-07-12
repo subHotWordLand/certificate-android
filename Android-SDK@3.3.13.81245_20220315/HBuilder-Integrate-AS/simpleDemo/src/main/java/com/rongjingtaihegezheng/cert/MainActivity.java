@@ -1129,7 +1129,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     int[] pixels = new int[iDataLen];
                     bitmap.getPixels(pixels, 0, width, 0, 0, width, heigh);
                     int[] data1 = pixels;
-                    int leftSpace = facei == 0 ? 14 : 34;
+                    int leftSpace = facei == 0 ? 24 : 44;
                     ptmUsbDriver.write(PrintCmd.SetLeftmargin(leftSpace));
                     ptmUsbDriver.write(PrintDiskImagefile(data1, width, 320));
 //                    if (facei == 0) {
