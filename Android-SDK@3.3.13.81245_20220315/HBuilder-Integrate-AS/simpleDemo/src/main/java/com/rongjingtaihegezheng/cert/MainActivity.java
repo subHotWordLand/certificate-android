@@ -1131,7 +1131,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                         emptyBp.eraseColor(Color.parseColor("#ffffff"));
                         //拼接空白到顶部
                         bitmap = BitmapUtils.addBitmap(emptyBp, cbp);
-                        //反面
+                        //正面
                         bitmap = BitmapUtils.rotateBitmap(bitmap, 180);
                     }
                     int iDataLen = width * heigh;
