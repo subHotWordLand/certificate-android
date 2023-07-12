@@ -1128,7 +1128,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                         Bitmap cbp = BitmapUtils.cropBitmapTop(bitmap, heigh - cropv);
                         //生成白色图片 高度为裁减的高度
                         Bitmap emptyBp = Bitmap.createBitmap(width, cropv, Bitmap.Config.ARGB_8888);
-                        emptyBp.eraseColor(Color.parseColor("#000000"));
+                        emptyBp.eraseColor(Color.parseColor("#ffffff"));
                         //拼接空白到顶部
                         bitmap = BitmapUtils.addBitmap(emptyBp, cbp);
                         //反面
