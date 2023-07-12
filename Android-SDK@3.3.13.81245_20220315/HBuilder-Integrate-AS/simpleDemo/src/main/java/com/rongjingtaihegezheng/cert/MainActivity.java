@@ -53,6 +53,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
@@ -772,6 +773,12 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
                     if ((device.getProductId() == 8211 && device.getVendorId() == 1305)
                             || (device.getProductId() == 8213 && device.getVendorId() == 1305)) {
                         //赋权限以后的操作
+                        try {
+                            printCheckDevices();
+                        } catch (IOException e) {
+                            showMessage(e.getMessage(), 1);
+                            e.printStackTrace();
+                        }
                     }
                 } else {
 //                    Toast.makeText(MainActivity.this, "permission denied for device",
@@ -1083,7 +1090,29 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         }
     }
 
+    private void printCheckDevices() throws IOException {
+        String strValue = "";
+        int iIndex = 0;
+        UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
+        while (deviceIterator.hasNext()) {
+            UsbDevice device = deviceIterator.next();
+            iIndex++;
+            strValue = strValue + String.valueOf(iIndex) + " DeviceClass:" + device.getDeviceClass() + "; DeviceId:" + device.getDeviceId() + "; DeviceName:" + device.getDeviceName() + "; VendorId:" + device.getVendorId() +
+                    "; \r\nProductId:" + device.getProductId() + "; InterfaceCount:" + device.getInterfaceCount() + "; describeContents:" + device.describeContents() + ";\r\n" +
+                    "DeviceProtocol:" + device.getDeviceProtocol() + ";DeviceSubclass:" + device.getDeviceSubclass() + ";\r\n";
+            strValue = strValue + "****************\r\n";
+
+        }
+        if (strValue.equals("")) {
+            strValue = "No USB device.";
+        }
+        Log.d(TAG, "printCheckDevices " + strValue);
+    }
+
     private void printAction() {
+
         if (prtInfo != null) {
             try {
                 String printCount = prtInfo.getString("printCount");
@@ -1173,6 +1202,7 @@ public class MainActivity extends CheckPermissionsActivity implements Permission
         super.onDestroy();
         //人脸usb监听
         mUsbDevPermission.unRegisterReceiver();
+        unregisterReceiver(ptmUsbReceiver);
         ptnum = 0;
         pthandler.removeCallbacks(ptrunnable);
     }

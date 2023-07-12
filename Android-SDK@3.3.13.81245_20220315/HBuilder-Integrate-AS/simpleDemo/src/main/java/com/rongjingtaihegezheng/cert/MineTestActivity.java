@@ -4,6 +4,7 @@ import static com.msprintsdk.UtilsTools.convertToBlackWhite;
 import static com.msprintsdk.UtilsTools.getFromRaw;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -12,6 +13,8 @@ import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -41,6 +44,17 @@ public class MineTestActivity extends Activity {
         Bitmap rb = addBitmap(bitmap, emptyBp);
         Bitmap bitmap1 = rotateBitmap(rb, 180);
         imageView1.setImageBitmap(bitmap1);
+        //
+        Button btn = findViewById(R.id.button);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                /*
+                Intent intent = new Intent(view.getContext(), SecActivity.class);
+                startActivity(intent);
+                 */
+            }
+        });
     }
 
     /**
